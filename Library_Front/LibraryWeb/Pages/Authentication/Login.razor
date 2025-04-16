@@ -1,0 +1,51 @@
+﻿@page "/login"
+@using DataModelLibrary.AuthRequestModels
+@using DataModelLibrary.Models
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    @if (_isLoggedIn)
+    {
+        <MudAlert Severity="Severity.Success">You are already logged in</MudAlert>
+        <div class="d-flex justify-center mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">Go to Books</MudButton>
+        </div>
+    }
+    else
+    {
+        <MudCard>
+            <MudForm @ref="form" @bind-IsValid="@success">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4" Class="mb-4">Login</MudText>
+                    <MudTextField @bind-Value="loginRequest.Username"
+                                  Label="Username"
+                                  Required="true"
+                                  RequiredError="Username is required" />
+                    <MudTextField @bind-Value="loginRequest.Password"
+                                  Label="Password"
+                                  Required="true"
+                                  RequiredError="Password is required"
+                                  InputType="InputType.Password" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Class="ml-auto"
+                               OnClick="HandleLogin"
+                               Disabled="@(!success)">Login</MudButton>
+                </MudCardActions>
+            </MudForm>
+        </MudCard>
+
+        <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+
+            <MudText Class="mt-4" Align="Align.Center">
+                Don't have an account?
+                <MudLink Href="/register">Register here</MudLink>
+            </MudText>
+        </MudContainer>
+    }
+</MudContainer>

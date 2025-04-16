@@ -1,0 +1,86 @@
+﻿@page "/orders"
+@using DataModelLibrary.Models
+@inject ISnackbar Snackbar
+@inject ILocalStorageService LocalStorage
+
+<PageTitle>My Ordered Books</PageTitle>
+@if(_isPageLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center mt-16">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_isAuthorized)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+        <MudAlert Severity="Severity.Warning">Please log in to view your ordered books</MudAlert>
+        <div class="d-flex justify-center mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/login">Go to Login</MudButton>
+        </div>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudText Typo="Typo.h3" Class="mb-4">My Orders</MudText>
+
+        <MudPaper Class="pa-4">
+            <MudTable T="OrderedBook" Items="@_orderedBooks" Dense="false" Hover="true" Loading="@_isDataLoading"
+                      LoadingProgressColor="Color.Info" Elevation="0"
+                      MultiSelection="true" @bind-value="_selectedBooks" 
+                      SelectedItemsChanged="OnSelectedBooksChanged">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Ordered Books</MudText>
+                    <MudSpacer />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Author</MudTh>
+                    <MudTh>Order Date</MudTh>
+                    <MudTh>Return Date</MudTh>
+                    <MudTh>Status</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Title">@context.Book.Title</MudTd>
+                    <MudTd DataLabel="Author">@context.Book.Author</MudTd>
+                    <MudTd DataLabel="Order Date">@context.OrderDate.ToShortDateString()</MudTd>
+                    <MudTd DataLabel="Return Date">
+                        @(context.ReturnDate.HasValue ? context.ReturnDate.Value.ToShortDateString() : "-")
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Color="@GetStatusColor(context)" Size="Size.Small" Variant="Variant.Text">
+                            @GetStatusText(context)
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>You haven't ordered any books yet.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+            @if (_orderedBooks.Count > 0) 
+            { 
+                <MudDivider Class="my-4" />
+            
+                <MudPaper Class="pa-4 mt-2">
+                    <MudText Typo="Typo.h6" Style="font-size:16px;" Class="mb-2">Selected Books: @_selectedBooks.Count</MudText>
+                    <MudButton OnClick="ReturnSelectedBooks" 
+                               Disabled="@(_selectedBooks.Count == 0 || _processingReturns)"
+                               Variant="Variant.Filled" 
+                               Color="Color.Primary"
+                               StartIcon="Icons.Material.Filled.AssignmentReturn"
+                               Size="Size.Medium">
+                        @if (_processingReturns)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <span class="ms-2">Processing...</span>
+                        }
+                        else
+                        {
+                            <span>Return Selected Books</span>
+                        }
+                    </MudButton>
+                </MudPaper>
+            }
+        </MudPaper>
+    </MudContainer>
+}

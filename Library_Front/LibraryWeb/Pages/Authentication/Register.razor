@@ -1,0 +1,110 @@
+﻿@page "/register"
+@using DataModelLibrary.AuthRequestModels
+@using DataModelLibrary.Models
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    @if (_isLoggedIn)
+    {
+        <MudAlert Severity="Severity.Success">You are already logged in</MudAlert>
+        <div class="d-flex justify-center mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">Go to Books</MudButton>
+        </div>
+    }
+    else
+    {
+        <MudCard>
+            <MudForm @ref="form" @bind-IsValid="@success" ValidationDelay="0">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4" Class="mb-4">Register</MudText>
+                    <MudTextField @bind-Value="registerRequest.Name"
+                                Label="Name"
+                                Required="true"
+                                RequiredError="Name is required"
+                                MaxLength="50"
+                                Counter="50"
+                                Immediate="true"
+                                Validation="@(new Func<string, string>(ValidateName))" />
+                    
+                    <MudTextField @bind-Value="registerRequest.Surname"
+                                Label="Surname"
+                                Required="true"
+                                RequiredError="Surname is required"
+                                MaxLength="50"
+                                Counter="50"
+                                Immediate="true"
+                                Validation="@(new Func<string, string>(ValidateName))" />
+                    
+                    <MudTextField @bind-Value="registerRequest.Email"
+                                Label="Email"
+                                Required="true"
+                                RequiredError="Email is required"
+                                Validation="@(new Func<string, string>(ValidateEmail))"
+                                Immediate="true"
+                                InputType="InputType.Email" />
+                    
+                    <MudTextField @bind-Value="registerRequest.Username"
+                                Label="Username"
+                                Required="true"
+                                RequiredError="Username is required"
+                                MaxLength="50"
+                                Counter="50"
+                                Immediate="true"
+                                Validation="@(new Func<string, string>(ValidateUsername))" />
+                    
+                    <MudTextField @bind-Value="registerRequest.Password"
+                                Label="Password"
+                                Required="true"
+                                RequiredError="Password is required"
+                                InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                                Adornment="Adornment.End"
+                                AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                OnAdornmentClick="() => _showPassword = !_showPassword"
+                                MaxLength="100"
+                                Immediate="true"
+                                Validation="@(new Func<string, string>(ValidatePassword))" />
+
+                    @if (!string.IsNullOrEmpty(registerRequest.Password))
+                    {
+                        <MudPaper Class="pa-4 mt-4" Elevation="0">
+                            <MudText>Password requirements:</MudText>
+                            <MudList T="string" Dense="true" DisablePadding="true">
+                                <MudListItem Icon="@(HasMinLength ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                            IconColor="@(HasMinLength ? Color.Success : Color.Error)">
+                                    Minimum 8 characters
+                                </MudListItem>
+                                <MudListItem Icon="@(HasUpperCase ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                            IconColor="@(HasUpperCase ? Color.Success : Color.Error)">
+                                    At least one uppercase letter
+                                </MudListItem>
+                                <MudListItem Icon="@(HasLowerCase ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                            IconColor="@(HasLowerCase ? Color.Success : Color.Error)">
+                                    At least one lowercase letter
+                                </MudListItem>
+                                <MudListItem Icon="@(HasDigit ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                            IconColor="@(HasDigit ? Color.Success : Color.Error)">
+                                    At least one number
+                                </MudListItem>
+                            </MudList>
+                        </MudPaper>
+                    }
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              Class="ml-auto"
+                              OnClick="HandleRegister"
+                              Disabled="@(!success)">Register</MudButton>
+                </MudCardActions>
+            </MudForm>
+        </MudCard>
+        <MudText Class="mt-4" Align="Align.Center">
+            Already have an account?
+            <MudLink Href="/login">Login here</MudLink>
+        </MudText>
+    }
+</MudContainer>

@@ -1,0 +1,99 @@
+﻿@using DataModelLibrary.Models
+
+<MudTable T="Book" Items="@Books" Dense="false" Hover="true" Loading="@IsLoading"
+          LoadingProgressColor="Color.Info" Elevation="0"
+          Filter="new Func<Book,bool>(FilterFunc)" OnRowClick="OnRowClick" RowClass="cursor-pointer">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Books</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Search"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium" Class="mt-0" />
+    </ToolBarContent>
+
+    <HeaderContent>
+        <MudTh>Title</MudTh>
+        <MudTh>Author</MudTh>
+        <MudTh>Availability</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Author">@context.Author</MudTd>
+        <MudTd DataLabel="Availability">
+            <MudText Color="@((bool)context.IsAvailable ? Color.Success : Color.Error)">
+                @((bool)context.IsAvailable ? "Available" : "Not Available")
+            </MudText>
+        </MudTd>
+        <MudTd>
+            <div class="d-flex">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               OnClick="@((e) => EditBook(context))"
+                               Class="rounded-circle mr-2" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@((e) => DeleteBook(context))"
+                               Class="rounded-circle" />
+            </div>
+        </MudTd>
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+
+    <NoRecordsContent>
+        <MudText>No books found matching the search criteria.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    [Parameter]
+    public List<Book> Books { get; set; } = new();
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public string SearchString { get; set; } = "";
+
+    [Parameter]
+    public EventCallback<TableRowClickEventArgs<Book>> OnRowClick { get; set; }
+
+    [Parameter]
+    public EventCallback<Book> OnDeleteBook { get; set; }
+
+    [Parameter]
+    public EventCallback<Book> OnEditBook { get; set; }
+
+    private string _searchString = "";
+
+    protected override void OnParametersSet()
+    {
+        _searchString = SearchString;
+        base.OnParametersSet();
+    }
+
+    private bool FilterFunc(Book book)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        return book.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
+               book.Author.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task DeleteBook(Book book)
+    {
+        await OnDeleteBook.InvokeAsync(book);
+    }
+
+    private async Task EditBook(Book book)
+    {
+        await OnEditBook.InvokeAsync(book);
+    }
+}

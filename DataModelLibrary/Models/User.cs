@@ -1,0 +1,50 @@
+﻿using DataModelLibrary.AuthModels;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
+namespace DataModelLibrary.Models
+{
+    [Index(nameof(Username), IsUnique = true)]
+
+    public partial class User
+    {
+        public User()
+        {
+            Id = Guid.NewGuid();
+        }
+
+        [Key]
+        public Guid Id { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Name { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Surname { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string PasswordHash { get; set; } = string.Empty;
+
+        public bool IsAdmin { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<OrderedBook> OrderedBooks { get; } = new List<OrderedBook>();
+
+        [JsonIgnore]
+        public virtual ICollection<UserToken> Tokens { get; } = new List<UserToken>();
+
+    }
+}

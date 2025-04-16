@@ -1,0 +1,222 @@
+﻿@page "/"
+@using DataModelLibrary.Models
+@inject ISnackbar Snackbar
+@inject ILocalStorageService LocalStorage
+
+<PageTitle>Books Library</PageTitle>
+@if(_isPageLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center mt-16">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_isAuthorized)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+        <MudAlert Severity="Severity.Warning">Please log in to access the book library</MudAlert>
+        <div class="d-flex justify-center mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/login">Go to Login</MudButton>
+        </div>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudText Typo="Typo.h3" Class="mb-4">Books Collection</MudText>
+
+        <MudPaper Class="pa-4">
+            @if (_isAdmin)
+            {
+                <AdminBooksTable Books="_books" 
+                IsLoading="_isDataLoading"
+                SearchString="@_searchString"
+                OnRowClick="OnRowClick"
+                OnDeleteBook="DeleteBookClick"
+                OnEditBook="EditBookClick" />
+
+                <MudButton OnClick="OpenAddBookDialog" 
+                Variant="Variant.Filled" 
+                Color="MudBlazor.Color.Primary" 
+                StartIcon="@Icons.Material.Filled.Add">Add new book</MudButton>
+
+            }
+            else
+            {
+                <UserBooksTable Books="_books" 
+                IsLoading="_isDataLoading" 
+                SearchString="_searchString"
+                OnRowClick="OnRowClick" />
+            }
+        </MudPaper>
+    </MudContainer>
+}
+
+<MudDialog Visible="_showDialog" OnBackdropClick="CloseDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Book Details</MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4">
+            <MudText><b>Title:</b> @_selectedBook.Title</MudText>
+            <MudText><b>Author:</b> @_selectedBook.Author</MudText>
+            <div style="width: 300px">
+                @if (!string.IsNullOrEmpty(_bookCoverUrl))
+                {
+                    <MudImage Src="@_bookCoverUrl" Alt="Book Cover" Style="max-width: 300px;" ObjectFit="ObjectFit.Cover" />
+                    @if (_selectedBook.IsAvailable)
+                    {
+                        <MudButton OnClick="OrderBook" Class="mt-2" FullWidth="true" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.ShoppingBasket">Order book</MudButton>
+                    }
+                    if(_isAdmin)
+                    {
+                        <MudButton OnClick="DeleteCover" Class="mt-2" FullWidth="true" Variant="Variant.Filled" Color="MudBlazor.Color.Error" StartIcon="@Icons.Material.Filled.Delete">Delete cover</MudButton>
+                    }
+                }
+                else if (_isAdmin)
+                {
+                    <MudStack Style="width: 100%">
+                        <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                        @ref="@_fileUpload"
+                        OnFilesChanged="OnInputFileChanged"
+                        AppendMultipleFiles
+                        Hidden="@false"
+                        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                        InputStyle="opacity:0"
+                        tabindex="-1"
+                        @ondrop="@ClearDragClass"
+                        @ondragenter="@SetDragClass"
+                        @ondragleave="@ClearDragClass"
+                        @ondragend="@ClearDragClass">
+                            <ActivatorContent>
+                                <MudPaper Height="300px"
+                                Outlined="true"
+                                Class="@_dragClass">
+                                    <MudText Typo="Typo.h6">
+                                        Drag and drop cover image here or click
+                                    </MudText>
+                                    @foreach (var file in _fileNames)
+                                    {
+                                        <MudChip T="string"
+                                        Color="Color.Dark"
+                                        Text="@file"
+                                        tabindex="-1" />
+                                    }
+                                </MudPaper>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                        <MudToolBar Gutters="@false"
+                        Class="relative d-flex justify-end gap-4">
+                            <MudButton Color="Color.Primary"
+                            OnClick="@OpenFilePickerAsync"
+                            Variant="Variant.Filled">
+                                Open file picker
+                            </MudButton>
+                            <MudButton Color="Color.Primary"
+                            Disabled="@(!_fileNames.Any())"
+                            OnClick="@UploadCoverImage"
+                            Variant="Variant.Filled">
+                                Upload
+                            </MudButton>
+                            <MudButton Color="Color.Error"
+                            Disabled="@(!_fileNames.Any())"
+                            OnClick="@ClearAsync"
+                            Variant="Variant.Filled">
+                                Clear
+                            </MudButton>
+                        </MudToolBar>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info">No cover image available. We will add it soon!</MudAlert>
+                }
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="@CloseDialog">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog Visible="_showAddBookDialog" 
+           OnBackdropClick="CloseAddBookDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New Book</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+            <MudTextField @bind-Value="_newBook.Title" 
+                          Label="Title" 
+                          Required="true" 
+                          RequiredError="Title is required!" 
+                          Immediate="true"/>
+            
+            <MudTextField @bind-Value="_newBook.Author" 
+                          Label="Author" 
+                          Required="true" 
+                          RequiredError="Author is required!" 
+                          Immediate="true" 
+                          Class="mt-4"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CloseAddBookDialog">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   OnClick="AddNewBook" 
+                   Disabled="_isAddingBook">
+            @if (_isAddingBook)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+            }
+            Add Book
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog Visible="_showEditBookDialog" 
+           OnBackdropClick="CloseEditBookDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Book</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+            <MudTextField @bind-Value="_bookToEdit.Title" 
+                          Label="Title" 
+                          Required="true" 
+                          RequiredError="Title is required!" 
+                          Immediate="true"/>
+            
+            <MudTextField @bind-Value="_bookToEdit.Author" 
+                          Label="Author" 
+                          Required="true" 
+                          RequiredError="Author is required!" 
+                          Immediate="true" 
+                          Class="mt-4"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CloseEditBookDialog">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   OnClick="UpdateBook" 
+                   Disabled="_isEditingBook">
+            @if (_isEditingBook)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+            }
+            Update Book
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog Visible="_showDeleteDialog" OnBackdropClick="CancelDelete">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Confirm Delete</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete "@_bookToDelete?.Title"?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="ConfirmDeleteBook">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
