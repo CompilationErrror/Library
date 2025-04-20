@@ -157,7 +157,7 @@ namespace LibraryWeb.Pages
 
             var userToken = await tokenResponse.Content.ReadFromJsonAsync<UserToken>();
 
-            var orderResponse = await HttpClient.PostAsync($"OrderBook?bookId={_selectedBook.Id}&custId={userToken.UserId}", null);
+            var orderResponse = await HttpClient.PostAsync($"OrderBook?bookId={_selectedBook.Id}&userId={userToken.UserId}", null);
 
             if (orderResponse.IsSuccessStatusCode)
             {
