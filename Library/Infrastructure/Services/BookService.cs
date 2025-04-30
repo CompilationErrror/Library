@@ -29,7 +29,7 @@ namespace LibraryApi.Infrastructure.Services
 
         public async Task UpdateBookAsync(Book book)
         {
-            _context.Update(book);
+            _context.Books.Update(book);
             await _context.SaveChangesAsync();
         }
 

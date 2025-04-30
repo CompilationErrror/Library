@@ -38,6 +38,8 @@ namespace DataModelLibrary.Models
         [StringLength(255)]
         public string PasswordHash { get; set; } = string.Empty;
 
+        public int TotalBooksReturned { get; set; } = 0;
+
         public bool IsAdmin { get; set; }
 
         [JsonIgnore]
@@ -46,5 +48,22 @@ namespace DataModelLibrary.Models
         [JsonIgnore]
         public virtual ICollection<UserToken> Tokens { get; } = new List<UserToken>();
 
+    }
+
+    public class UserUpdateModel
+    {
+        public Guid UserId { get; set; }
+        public string? Name { get; set; }
+        public string? Surname { get; set; }
+        public string? Email { get; set; }
+        public string? CurrentPassword { get; set; }
+        public string? NewPassword { get; set; }
+    }
+
+    public class UserStats
+    {
+        public int CurrentlyBorrowed { get; set; }
+        public int BooksReturned { get; set; }
+        public int OverdueBooks { get; set; }
     }
 }

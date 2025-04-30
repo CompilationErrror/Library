@@ -15,22 +15,43 @@ namespace LibraryApi.Controllers
             _customerService = customerService; 
         }
 
-        [HttpGet("/GetCustomers")]
-        public async Task<List<User>> GetCustomers()
+        [HttpGet("/GetUsers")]
+        public async Task<List<User>> GetUser()
         {
             return await _customerService.GetUsersAsync();
         }
 
-        [HttpPost("/AddCustomer")]
-        public async Task<List<User>> AddCustomer(User customer)
+        [HttpGet("/GetUserById")]
+        public async Task<User> GetUserById(Guid userId)
         {
-            return await _customerService.AddUserAsync(customer);
+            return await _customerService.GetUserByIdAsync(userId);
         }
 
-        [HttpDelete("/DeleteCustomer")]
-        public async Task<List<User>> DeleteCustomer([Required] Guid id)
+        [HttpGet("/GetUserStats")]
+        public async Task<UserStats> GetUserStats(Guid userId) 
         {
-            return await _customerService.DeleteUserAsync(id);
+            return await _customerService.GetUserStatsAsync(userId);
+        }
+
+        [HttpPut("/UpdateUser")]
+        public async Task<IActionResult> UpdateUser(UserUpdateModel userToUpdate) 
+        {
+            await _customerService.UpdateUserAsync(userToUpdate);
+            return NoContent();
+        }
+
+        [HttpPost("/AddUser")]
+        public async Task<IActionResult> AddUser(User customer)
+        {
+            await _customerService.AddUserAsync(customer);
+            return NoContent();
+        }
+
+        [HttpDelete("/DeleteUser")]
+        public async Task<IActionResult> DeleteUser([Required] Guid id)
+        {
+            await _customerService.DeleteUserAsync(id);
+            return NoContent();
         }
     }
 }

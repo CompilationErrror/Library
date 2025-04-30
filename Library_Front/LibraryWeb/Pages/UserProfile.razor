@@ -1,0 +1,183 @@
+﻿@page "/profile"
+@using DataModelLibrary.Models
+@using System.ComponentModel.DataAnnotations
+@inject ISnackbar Snackbar
+@inject ILocalStorageService LocalStorage
+
+<PageTitle>User Profile</PageTitle>
+
+@if(_isPageLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center mt-16">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_isAuthorized)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+        <MudAlert Severity="Severity.Warning">Please log in to access your profile</MudAlert>
+        <div class="d-flex justify-center mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/login">Go to Login</MudButton>
+        </div>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-1">
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudText Typo="Typo.h4" Class="mb-4">User Profile</MudText>
+            
+            @if (_editMode)
+            {
+                <MudForm @ref="_form" Model="@_userEdit" @bind-IsValid="@_isValid">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudTextField @bind-Value="_userEdit.Name" 
+                                Label="First Name" 
+                                Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField @bind-Value="_userEdit.Surname" 
+                                Label="Last Name" 
+                                Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_userEdit.Email" 
+                                Label="Email" 
+                                Validation="@(new EmailAddressAttribute() {ErrorMessage = "Invalid email format"})" 
+                                Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_userEdit.Username" 
+                                Label="Username" 
+                                Disabled="true"
+                                HelperText="Username cannot be changed" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.VpnKey" Class="mr-2" />
+                                        <MudText Color="Color.Warning" Style="text-decoration: underline;">Change Password</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudGrid>
+                                        <MudItem xs="12">
+                                            <MudTextField @bind-Value="_currentPassword"
+                                                          Label="Current Password"
+                                                          InputType="InputType.Password" />
+                                        </MudItem>
+                                        <MudItem xs="12">
+                                            <MudTextField @bind-Value="_newPassword"
+                                                          Label="New Password"
+                                                          InputType="InputType.Password" />
+                                        </MudItem>
+                                        <MudItem xs="12">
+                                            <MudTextField @bind-Value="_confirmPassword"
+                                                          Label="Confirm New Password"
+                                                          InputType="InputType.Password"
+                                                          Validation="@(new Func<string, string>(PasswordMatch))" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudItem>
+                    </MudGrid>
+                    
+                    <div class="d-flex justify-end mt-6">
+                        <MudButton Variant="Variant.Outlined" 
+                            Color="Color.Secondary" 
+                            Class="mr-2" 
+                            OnClick="CancelEdit">Cancel</MudButton>
+                        <MudButton Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            Disabled="@(!_isValid || _isSaving)" 
+                            OnClick="SaveProfile">
+                            @if (_isSaving)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                            }
+                            Save Changes
+                        </MudButton>
+                    </div>
+                </MudForm>
+            }
+            else
+            {
+                <MudList T="User" >
+                    <MudListItem Icon="@Icons.Material.Filled.Person">
+                        <MudText><b>Name:</b> @_user.Name @_user.Surname</MudText>
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Email">
+                        <MudText><b>Email:</b> @_user.Email</MudText>
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.AccountCircle">
+                        <MudText><b>Username:</b> @_user.Username</MudText>
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.AdminPanelSettings">
+                        <MudText><b>Role:</b> @(_user.IsAdmin ? "Administrator" : "User")</MudText>
+                    </MudListItem>
+                </MudList>
+                
+                <div class="d-flex justify-end mt-6">
+                    <MudButton Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        StartIcon="@Icons.Material.Filled.Edit" 
+                        OnClick="@(() => _editMode = true)">
+                        Edit Profile
+                    </MudButton>
+                </div>
+            }
+        </MudPaper>
+        
+        <MudPaper Class="pa-6 mt-6 mb-6" Elevation="3">
+            <MudText Typo="Typo.h5" Class="mb-4">Reading Statistics</MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="2" Class="pa-4 text-center">
+                        <MudText Typo="Typo.h6">Currently Borrowed</MudText>
+                        <MudText Typo="Typo.h3" Color="Color.Primary">@_currentlyBorrowed</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="2" Class="pa-4 text-center">
+                        <MudText Typo="Typo.h6">Books Returned</MudText>
+                        <MudText Typo="Typo.h3" Color="Color.Success">@_booksReturned</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="2" Class="pa-4 text-center">
+                        <MudText Typo="Typo.h6">Overdue Books</MudText>
+                        <MudText Typo="Typo.h3" Color="Color.Error">@_overdueBooks</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+            
+            <div class="d-flex justify-end mt-4">
+                <MudButton Variant="Variant.Text" 
+                    Color="Color.Primary" 
+                    StartIcon="@Icons.Material.Filled.MenuBook" 
+                    Href="/orders">
+                    View My Books
+                </MudButton>
+            </div>
+        </MudPaper>
+    </MudContainer>
+}
+
+<MudDialog Visible="_showConfirmDialog" Options="new DialogOptions { CloseOnEscapeKey = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Confirm Password Change</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>
+            Are you sure you want to change your password? You will need to use your new password the next time you log in.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="@(() => _showConfirmDialog = false)">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmPasswordChange">Confirm</MudButton>
+    </DialogActions>
+</MudDialog>

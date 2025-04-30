@@ -61,6 +61,9 @@ namespace LibraryApi.Infrastructure.Services
             .Where(ob => bookIds.Contains(ob.BookId))
             .ToListAsync();
 
+            var user = await _context.Users.FirstOrDefaultAsync(c => c.Id == orderedBooksToDelete.First().UserId);
+            user.TotalBooksReturned++;
+
             orderedBooksToDelete.ForEach(ob => ob.Book.IsAvailable = true);
 
             _context.OrderedBooks.RemoveRange(orderedBooksToDelete);
