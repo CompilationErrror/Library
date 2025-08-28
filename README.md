@@ -80,3 +80,11 @@ A modern library management system with RESTful API backend and Blazor WebAssemb
 - [ ] Role-based functionality improvement
 - [ ] Test eviroment
 - [ ] Email service
+
+## 📄 License
+
+This project is available for educational and commercial use.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
