@@ -9,6 +9,8 @@ namespace LibraryApi.Authentication
         private readonly ILogger<TokenCleanupService> _logger;
         private readonly TimeSpan _cleanupInterval;
 
+        private readonly DateTime _maxExpDate = DateTime.Now.AddDays(-14);
+
         public TokenCleanupService(
             IServiceProvider serviceProvider,
             ILogger<TokenCleanupService> logger)
@@ -25,7 +27,6 @@ namespace LibraryApi.Authentication
                 try
                 {
                     await CleanupTokensAsync(stoppingToken);
-                    _logger.LogInformation("Successfully cleaned up revoked tokens at: {time}", DateTimeOffset.Now);
                 }
                 catch (Exception ex)
                 {
@@ -42,14 +43,16 @@ namespace LibraryApi.Authentication
             var context = scope.ServiceProvider.GetRequiredService<LibraryContext>();
 
             var tokensToDelete = await context.UserTokens
-                .Where(t => t.IsRevoked)
-                .ToListAsync(stoppingToken);
+            .Where(t => t.IsRevoked || t.ExpiresAt < _maxExpDate)
+            .ToListAsync(stoppingToken);
 
             if (tokensToDelete.Any())
             {
                 context.UserTokens.RemoveRange(tokensToDelete);
                 await context.SaveChangesAsync(stoppingToken);
-                _logger.LogInformation("Removed {count} revoked tokens", tokensToDelete.Count);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Removed {tokensToDelete.Count} revoked tokens");
+                Console.ResetColor();
             }
         }
     }

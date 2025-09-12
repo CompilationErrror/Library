@@ -44,7 +44,7 @@ namespace LibraryApi.Controllers
         public async Task<IActionResult> AddUser(User customer)
         {
             await _customerService.AddUserAsync(customer);
-            return NoContent();
+            return Created();
         }
 
         [HttpDelete("/DeleteUser")]

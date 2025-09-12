@@ -13,6 +13,7 @@ namespace DataModelLibrary.AuthModels
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
+        [StringLength(1000)]
         public string Token { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }

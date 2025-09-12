@@ -1,6 +1,8 @@
-﻿using System.Net.Http.Headers;
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 
 public class AuthenticationStateService
 {
@@ -26,7 +28,6 @@ public class AuthenticationStateService
         await _localStorage.SetItemAsync("refreshToken", refreshToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        // Update cached state
         _isAuthenticated = true;
         _lastValidated = DateTime.UtcNow;
 
@@ -55,7 +56,7 @@ public class AuthenticationStateService
         if (string.IsNullOrEmpty(token))
         {
             _isAuthenticated = false;
-            return false;
+            return _isAuthenticated.Value;
         }
 
         if (DateTime.UtcNow - _lastValidated >= _validationInterval)
@@ -70,7 +71,22 @@ public class AuthenticationStateService
         }
 
         _isAuthenticated = true;
-        return true;
+        return _isAuthenticated.Value;
+    }
+
+    public async Task<bool> IsAdmin() 
+    {
+        var token = await _localStorage.GetItemAsync<string>("authToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            return jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        }
+        else 
+        {
+            throw new Exception("Problem occured while reading token");
+        }
     }
 
     private async Task<bool> ValidateTokenWithServer(string token)

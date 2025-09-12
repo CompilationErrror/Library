@@ -11,7 +11,14 @@
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        @if (_isAdmin)
+        {
+            <AdminNavMenu />
+        }
+        else
+        {
+            <NavMenu />
+        }
     </div>
 
     <main>

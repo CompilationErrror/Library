@@ -63,7 +63,7 @@ else
                 @if (!string.IsNullOrEmpty(_bookCoverUrl))
                 {
                     <MudImage Src="@_bookCoverUrl" Alt="Book Cover" Style="max-width: 300px;" ObjectFit="ObjectFit.Cover" />
-                    @if (_selectedBook.IsAvailable)
+                    @if (_selectedBook.IsAvailable && !_isAdmin)
                     {
                         <MudButton OnClick="OrderBook" Class="mt-2" FullWidth="true" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.ShoppingBasket">Order book</MudButton>
                     }

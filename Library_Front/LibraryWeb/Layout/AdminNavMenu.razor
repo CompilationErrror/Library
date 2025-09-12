@@ -1,0 +1,56 @@
+﻿@inject ILocalStorageService LocalStorage
+
+<div class="top-row ps-3 navbar navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin">
+            <span class="bi bi-shield-fill me-2"></span>Admin Panel
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/admin" Match="NavLinkMatch.All">
+                <span class="bi bi-speedometer2 me-2" aria-hidden="true"></span> Dashboard
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/">
+                <span class="bi bi-book-fill me-2" aria-hidden="true"></span> Manage Books
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/admin/orders">
+                <span class="bi bi-bag-fill me-2" aria-hidden="true"></span> Manage Orders
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/admin/users">
+                <span class="bi bi-people-fill me-2" aria-hidden="true"></span> Manage Users
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/admin/reports">
+                <span class="bi bi-graph-up me-2" aria-hidden="true"></span> Reports
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

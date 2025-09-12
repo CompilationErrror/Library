@@ -56,13 +56,7 @@ namespace LibraryWeb.Pages
 
             if (_isAuthorized)
             {
-                var token = await LocalStorage.GetItemAsync<string>("authToken");
-                if (!string.IsNullOrEmpty(token))
-                {
-                    var handler = new JwtSecurityTokenHandler();
-                    var jwtToken = handler.ReadJwtToken(token);
-                    _isAdmin = jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
-                }
+                _isAdmin = await AuthStateService.IsAdmin();
 
                 await LoadBooks();
             }
@@ -308,13 +302,7 @@ namespace LibraryWeb.Pages
 
             if (_isAuthorized)
             {
-                var token = await LocalStorage.GetItemAsync<string>("authToken");
-                if (!string.IsNullOrEmpty(token))
-                {
-                    var handler = new JwtSecurityTokenHandler();
-                    var jwtToken = handler.ReadJwtToken(token);
-                    _isAdmin = jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
-                }
+                _isAdmin = await AuthStateService.IsAdmin();
 
                 await LoadBooks();
             }

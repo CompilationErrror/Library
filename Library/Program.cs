@@ -11,32 +11,40 @@ using LibraryApi.Authentication;
 using System.Threading.RateLimiting;
 using LibraryApi.Extensions;
 using Jose;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-builder.Logging.SetMinimumLevel(LogLevel.Information);
-builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+builder.Host.UseSerilog((context, config) => config
+    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning));
 
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<LibraryContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DbConnectionString");
-    options.UseSqlServer(connectionString);
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.CommandTimeout(30); 
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null);
+    });
 }, ServiceLifetime.Scoped);
-
-builder.Services.AddAzureClients(clientBuilder =>
-{
-    clientBuilder.AddBlobServiceClient(builder.Configuration.GetConnectionString("BlobConnection"));
-});
 
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IBlobService, BlobService>();
+
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("Cloudinary"));
+
+builder.Services.AddScoped<IBlobService, CloudinaryBlobService>();
+
 builder.Services.AddScoped<ICoverImagesService, CoverImagesService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -67,6 +75,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
         };
     });
+
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<TokenValidationParameters>(options =>
 {
@@ -86,13 +95,31 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<LibraryContext>();
+    try
+    {
+        context.Database.EnsureCreated(); 
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while creating/migrating the database.");
+    }
+}
+
 app.UseGlobalExceptionHandler();
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
 app.UseCors("AllowBlazor");
+
+app.UseAuthentication(); 
 
 app.UseAuthorization();
 

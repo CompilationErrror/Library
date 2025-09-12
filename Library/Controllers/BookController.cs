@@ -27,7 +27,7 @@ namespace LibraryApi.Controllers
         public async Task<IActionResult> AddBook(Book book)
         {
             await _bookService.AddBookAsync(book);
-            return NoContent();
+            return Created();
         }
 
         [HttpPut("/ChangeBook")]

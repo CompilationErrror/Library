@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Routing;
 using MudBlazor;
 
 namespace LibraryWeb.Layout
@@ -7,16 +6,16 @@ namespace LibraryWeb.Layout
     partial class MainLayout
     {
         private bool _isAuthenticated;
+        private bool _isAdmin;
+
         [Inject]
         private AuthenticationStateService AuthStateService { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
-            _isAuthenticated = !string.IsNullOrEmpty(token);
+            _isAuthenticated = await AuthStateService.IsAuthenticated();
 
-            AuthStateService.AuthenticationChanged += HandleAuthenticationChanged;
-
+            _isAdmin = await AuthStateService.IsAdmin();
         }
 
         private async void HandleAuthenticationChanged()
@@ -50,7 +49,6 @@ namespace LibraryWeb.Layout
                 Snackbar.Add($"Error during logout: {ex.Message}", Severity.Error);
             }
         }
-
         public void Dispose()
         {
             AuthStateService.AuthenticationChanged -= HandleAuthenticationChanged;

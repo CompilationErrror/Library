@@ -47,7 +47,7 @@ namespace LibraryApi.Controllers
                 return Unauthorized();
 
             await _authService.LogoutAsync(authHeader);
-            return Ok();
+            return NoContent();
         }
 
         [HttpPost("ValidateToken")]
