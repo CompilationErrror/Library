@@ -1,5 +1,4 @@
-﻿using DataModelLibrary.AuthModels;
-using DataModelLibrary.Models;
+﻿using DataModelLibrary.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -139,19 +138,7 @@ namespace LibraryWeb.Pages
 
         private async Task OrderBook() 
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
-
-            var tokenResponse = await HttpClient.PostAsync($"api/Authentication/GetTokenInstance?accessToken={Uri.EscapeDataString(token)}", null);
-
-            if (!tokenResponse.IsSuccessStatusCode)
-            {
-                _snackbar.Add("Error retrieving user information", Severity.Error);
-                return;
-            }
-
-            var userToken = await tokenResponse.Content.ReadFromJsonAsync<UserToken>();
-
-            var orderResponse = await HttpClient.PostAsync($"OrderBook?bookId={_selectedBook.Id}&userId={userToken.UserId}", null);
+            var orderResponse = await HttpClient.PostAsync($"OrderBook?bookId={_selectedBook.Id}", null);
 
             if (orderResponse.IsSuccessStatusCode)
             {

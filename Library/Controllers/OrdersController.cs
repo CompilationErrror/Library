@@ -2,6 +2,7 @@
 using LibraryApi.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace LibraryApi.Controllers
 {
@@ -17,15 +18,25 @@ namespace LibraryApi.Controllers
         }
 
         [HttpPost("/OrderBook")]
-        public async Task<IActionResult> OrderBook([Required] int bookId, [Required] Guid userId)
+        public async Task<IActionResult> OrderBook([Required] int bookId)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest("Invalid user token");
+            }
             await _orderService.PlaceBookOrder(bookId, userId);
             return NoContent();                
         }
 
         [HttpGet("/GetOrderedBooksAsync")]
-        public async Task<ActionResult<List<OrderedBook>>> GetOrderedBooksAsync(Guid userId) 
+        public async Task<ActionResult<List<OrderedBook>>> GetOrderedBooksAsync() 
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest("Invalid user token");
+            }
             var orderedBooks = await _orderService.GetOrderedBooksByUserId(userId);
             return Ok(orderedBooks);
         }

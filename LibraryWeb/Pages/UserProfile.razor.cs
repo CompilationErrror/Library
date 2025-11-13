@@ -1,5 +1,4 @@
-﻿using DataModelLibrary.AuthModels;
-using DataModelLibrary.Models;
+﻿using DataModelLibrary.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Net.Http.Json;
@@ -58,16 +57,7 @@ namespace LibraryWeb.Pages
 
             if (!string.IsNullOrEmpty(token))
             {
-                var tokenResponse = await HttpClient.PostAsync($"api/Authentication/GetTokenInstance?accessToken={Uri.EscapeDataString(token)}", null);
-
-                if (!tokenResponse.IsSuccessStatusCode)
-                {
-                    _snackbar.Add("Error retrieving user information", Severity.Error);
-                    return;
-                }
-
-                var userToken = await tokenResponse.Content.ReadFromJsonAsync<UserToken>();
-                var userResponse = await HttpClient.GetAsync($"GetUserById?userId={userToken.UserId}");
+                var userResponse = await HttpClient.GetAsync($"GetUserById");
 
                 if (userResponse.IsSuccessStatusCode)
                 {
@@ -103,16 +93,7 @@ namespace LibraryWeb.Pages
 
         private async Task LoadUserStatistics()
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
-            var tokenResponse = await HttpClient.PostAsync($"api/Authentication/GetTokenInstance?accessToken={Uri.EscapeDataString(token)}", null);
-
-            if (!tokenResponse.IsSuccessStatusCode)
-            {
-                return;
-            }
-
-            var userToken = await tokenResponse.Content.ReadFromJsonAsync<UserToken>();
-            var statsResponse = await HttpClient.GetAsync($"GetUserStats?userId={userToken.UserId}");
+            var statsResponse = await HttpClient.GetAsync($"GetUserStats");
 
             if (statsResponse.IsSuccessStatusCode)
             {

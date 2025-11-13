@@ -1,5 +1,4 @@
-﻿using DataModelLibrary.AuthModels;
-using DataModelLibrary.AuthRequestModels;
+﻿using DataModelLibrary.AuthRequestModels;
 using LibraryApi.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,13 +39,13 @@ namespace LibraryApi.Controllers
 
         [Authorize]
         [HttpPost("Logout")]
-        public async Task<ActionResult> Logout()
+        public async Task<ActionResult> Logout([FromBody]string refreshToken)
         {
             var authHeader = Request.Headers.Authorization.FirstOrDefault();
             if (string.IsNullOrEmpty(authHeader))
                 return Unauthorized();
 
-            await _authService.LogoutAsync(authHeader);
+            await _authService.LogoutAsync(authHeader, refreshToken);
             return NoContent();
         }
 
@@ -55,13 +54,6 @@ namespace LibraryApi.Controllers
         {
             var isValid = await _authService.ValidateTokenAsync(token);
             return Ok(isValid);
-        }
-
-        [HttpPost("GetTokenInstance")]
-        public async Task<ActionResult<UserToken>> GetTokenInstance(string accessToken)
-        {
-            var response = await _authService.GetUserTokenInstanceAsync(accessToken);
-            return Ok(response);
         }
     }
 }

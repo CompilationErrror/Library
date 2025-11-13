@@ -2,6 +2,7 @@
 using LibraryApi.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace LibraryApi.Controllers
 {
@@ -16,21 +17,33 @@ namespace LibraryApi.Controllers
         }
 
         [HttpGet("/GetUsers")]
-        public async Task<List<User>> GetUser()
+        public async Task<ActionResult<List<User>>> GetUsers()
         {
-            return await _customerService.GetUsersAsync();
+            return Ok(await _customerService.GetUsersAsync());
         }
 
         [HttpGet("/GetUserById")]
-        public async Task<User> GetUserById(Guid userId)
+        public async Task<ActionResult<User>> GetUserById()
         {
-            return await _customerService.GetUserByIdAsync(userId);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest("Invalid user token");
+            }
+            var user = await _customerService.GetUserByIdAsync(userId);
+            return Ok(user);
         }
 
         [HttpGet("/GetUserStats")]
-        public async Task<UserStats> GetUserStats(Guid userId) 
+        public async Task<ActionResult<UserStats>> GetUserStats() 
         {
-            return await _customerService.GetUserStatsAsync(userId);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest("Invalid user token");
+            }
+            var userStats = await _customerService.GetUserStatsAsync(userId);
+            return Ok(userStats);
         }
 
         [HttpPut("/UpdateUser")]

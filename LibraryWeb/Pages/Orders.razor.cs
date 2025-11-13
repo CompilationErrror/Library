@@ -1,5 +1,4 @@
-﻿using DataModelLibrary.AuthModels;
-using DataModelLibrary.Models;
+﻿using DataModelLibrary.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Net.Http.Json;
@@ -37,19 +36,7 @@ namespace LibraryWeb.Pages
 
         private async Task LoadOrderedBooks()
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
-
-            var tokenResponse = await HttpClient.PostAsync($"api/Authentication/GetTokenInstance?accessToken={Uri.EscapeDataString(token)}", null);
-
-            if (!tokenResponse.IsSuccessStatusCode)
-            {
-                _snackbar.Add("Error retrieving user information", Severity.Error);
-                return;
-            }
-
-            var userToken = await tokenResponse.Content.ReadFromJsonAsync<UserToken>();
-
-            _orderedBooks = await HttpClient.GetFromJsonAsync<List<OrderedBook>>($"GetOrderedBooksAsync?userId={userToken.UserId}");
+            _orderedBooks = await HttpClient.GetFromJsonAsync<List<OrderedBook>>($"GetOrderedBooksAsync");
             _selectedBooks.Clear();
 
             _isDataLoading = false;

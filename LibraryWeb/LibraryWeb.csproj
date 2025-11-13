@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\DataModelLibrary\DataModelLibrary.csproj" />
+	  <ProjectReference Include="..\DataModelLibrary\DataModelLibrary.csproj" />
 	</ItemGroup>
 
 </Project>

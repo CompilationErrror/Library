@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using System.Net.Http.Json;
 
 namespace LibraryWeb.Layout
 {
@@ -16,6 +17,8 @@ namespace LibraryWeb.Layout
             _isAuthenticated = await AuthStateService.IsAuthenticated();
 
             _isAdmin = await AuthStateService.IsAdmin();
+
+            AuthStateService.AuthenticationChanged += HandleAuthenticationChanged;
         }
 
         private async void HandleAuthenticationChanged()
@@ -28,11 +31,14 @@ namespace LibraryWeb.Layout
         {
             try
             {
-                var token = await LocalStorage.GetItemAsync<string>("authToken");
-                if (!string.IsNullOrEmpty(token))
+                var accessToken = await LocalStorage.GetItemAsync<string>("authToken");
+                var refreshToken = await LocalStorage.GetItemAsync<string>("refreshToken");
+
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                    var response = await Http.PostAsync("api/Authentication/Logout", null);
+                    Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                    var response = await Http.PostAsJsonAsync("api/Authentication/Logout", refreshToken);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -46,6 +52,7 @@ namespace LibraryWeb.Layout
             }
             catch (Exception ex)
             {
+                await AuthStateService.ClearAuthenticationState();
                 Snackbar.Add($"Error during logout: {ex.Message}", Severity.Error);
             }
         }

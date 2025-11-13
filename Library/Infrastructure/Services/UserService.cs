@@ -90,10 +90,6 @@ namespace LibraryApi.Infrastructure.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _context.UserTokens
-                    .Where(t => t.UserId == userId)
-                    .ExecuteDeleteAsync();
-
                 var user = await _context.Users.FirstAsync(c => c.Id == userId);
                 _context.Users.Remove(user);
 

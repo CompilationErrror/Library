@@ -12,7 +12,7 @@ public class AuthenticationStateService
 
     private bool? _isAuthenticated;
     private DateTime _lastValidated = DateTime.MinValue;
-    private TimeSpan _validationInterval = TimeSpan.FromHours(1); 
+    private TimeSpan _validationInterval = TimeSpan.FromMinutes(30); 
 
     public event Action? AuthenticationChanged;
 
@@ -83,10 +83,8 @@ public class AuthenticationStateService
             var jwtToken = handler.ReadJwtToken(token);
             return jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
         }
-        else 
-        {
-            throw new Exception("Problem occured while reading token");
-        }
+
+        return false;
     }
 
     private async Task<bool> ValidateTokenWithServer(string token)

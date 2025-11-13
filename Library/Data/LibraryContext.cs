@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using DataModelLibrary.Models;
-using DataModelLibrary.AuthModels;
 
 namespace LibraryApi.Data;
 
@@ -24,8 +23,6 @@ public partial class LibraryContext : DbContext
     public virtual DbSet<OrderedBook> OrderedBooks { get; set; }
 
     public virtual DbSet<CoverImages> CoverImages { get; set; }
-
-    public DbSet<UserToken> UserTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,28 +57,6 @@ public partial class LibraryContext : DbContext
             entity.HasOne(c => c.Book)
                 .WithOne(b => b.Cover)
                 .HasForeignKey<CoverImages>(c => c.BookId);
-        });
-
-        modelBuilder.Entity<UserToken>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-
-            entity.HasIndex(e => e.Token);
-
-            entity.HasIndex(e => e.UserId);
-
-            entity.HasOne(t => t.User)
-                .WithMany(u => u.Tokens)
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade); 
-
-            entity.Property(e => e.Token)
-                .IsRequired()
-                .HasMaxLength(400); 
-
-            entity.Property(e => e.RefreshToken)
-                .IsRequired()
-                .HasMaxLength(400);
         });
 
         OnModelCreatingPartial(modelBuilder);

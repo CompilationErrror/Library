@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using LibraryApi.Data;
 using LibraryApi.Infrastructure.Interfaces;
 using LibraryApi.Infrastructure.Services;
-using Microsoft.Extensions.Azure;
 using LibraryApi.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +11,7 @@ using System.Threading.RateLimiting;
 using LibraryApi.Extensions;
 using Jose;
 using Serilog;
+using LibraryApi.Authentication.TokenStore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,16 +39,14 @@ builder.Services.AddDbContext<LibraryContext>(options =>
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICoverImagesService, CoverImagesService>();
+builder.Services.AddScoped<IBlobService, CloudinaryBlobService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRedisTokenStore, RedisTokenStore>();
 
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 
-builder.Services.AddScoped<IBlobService, CloudinaryBlobService>();
-
-builder.Services.AddScoped<ICoverImagesService, CoverImagesService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-builder.Services.AddHostedService<TokenCleanupService>();
 
 builder.Services.AddCors(options =>
 {
@@ -75,6 +73,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
         };
     });
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";   
+    options.InstanceName = "Auth_";             
+});
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<TokenValidationParameters>(options =>

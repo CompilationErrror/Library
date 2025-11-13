@@ -1,5 +1,4 @@
-﻿using DataModelLibrary.AuthModels;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -44,10 +43,6 @@ namespace DataModelLibrary.Models
 
         [JsonIgnore]
         public virtual ICollection<OrderedBook> OrderedBooks { get; } = new List<OrderedBook>();
-
-        [JsonIgnore]
-        public virtual ICollection<UserToken> Tokens { get; } = new List<UserToken>();
-
     }
 
     public class UserUpdateModel
