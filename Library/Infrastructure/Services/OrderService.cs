@@ -15,7 +15,7 @@ namespace LibraryApi.Infrastructure.Services
             _context = context;
         }
 
-        public async Task PlaceBookOrder(int bookId, Guid userId)
+        public async Task PlaceBookOrderAsync(int bookId, Guid userId)
         {
             var book = await _context.Books
                 .FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new ArgumentException("Book not found");
@@ -46,7 +46,7 @@ namespace LibraryApi.Infrastructure.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<OrderedBook>> GetOrderedBooksByUserId(Guid userId) 
+        public async Task<List<OrderedBook>> GetOrderedBooksByUserIdAsync(Guid userId) 
         {
             var orderedBooks = await _context.OrderedBooks
                 .Include(ob => ob.Book)

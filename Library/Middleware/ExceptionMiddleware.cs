@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using DataModelLibrary;
 using Serilog;
 
 namespace LibraryApi.Middleware
@@ -46,27 +47,11 @@ namespace LibraryApi.Middleware
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
-            var response = _environment.IsDevelopment()
-                ? new ApiException(context.Response.StatusCode, exception.Message, exception.StackTrace?.ToString())
-                : new ApiException(context.Response.StatusCode, "Internal Server Error");
+            var response = new ApiExceptionResponse(context.Response.StatusCode, "Something went wrong. Please try again later.");
 
             var json = JsonSerializer.Serialize(response, CachedJsonSerializerOptions);
 
             await context.Response.WriteAsync(json);
-        }
-    }
-
-    public class ApiException
-    {
-        public int StatusCode { get; set; }
-        public string Message { get; set; }
-        public string Details { get; set; }
-
-        public ApiException(int statusCode, string message, string details = null)
-        {
-            StatusCode = statusCode;
-            Message = message;
-            Details = details;
         }
     }
 }

@@ -19,8 +19,7 @@ namespace LibraryApi.Authentication
             var data = new TokenData
             {
                 UserId = userId,
-                ExpiresAt = expiresAt,
-                IsRevoked = false
+                ExpiresAt = expiresAt
             };
 
             var options = new DistributedCacheEntryOptions
@@ -34,7 +33,7 @@ namespace LibraryApi.Authentication
                 options);
         }
 
-        public async Task<(Guid UserId, DateTime ExpiresAt, bool IsRevoked)?> GetAsync(string refreshToken)
+        public async Task<(Guid UserId, DateTime ExpiresAt)?> GetAsync(string refreshToken)
         {
             var json = await _cache.GetStringAsync($"refresh:{refreshToken}");
             if (json == null) return null;
@@ -42,7 +41,7 @@ namespace LibraryApi.Authentication
             var data = JsonSerializer.Deserialize<TokenData>(json, _opts);
             if (data == null) return null;
 
-            return (data.UserId, data.ExpiresAt, data.IsRevoked);
+            return (data.UserId, data.ExpiresAt);
         }
 
         public async Task RevokeAsync(string refreshToken)
@@ -54,7 +53,6 @@ namespace LibraryApi.Authentication
         {
             public Guid UserId { get; set; }
             public DateTime ExpiresAt { get; set; }
-            public bool IsRevoked { get; set; }
         }
     }
 }

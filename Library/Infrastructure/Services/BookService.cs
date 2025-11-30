@@ -14,11 +14,16 @@ namespace LibraryApi.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<List<Book>> GetBooksAsync(int id = 0)
+        public async Task<List<Book>> GetBooksAsync()
         {
-            if (id != 0)
-                return await _context.Books.Where(x => x.Id == id).ToListAsync();
             return await _context.Books.ToListAsync();
+        }
+
+        public async Task<Book> GetBookByIdAsync(int id)
+        {
+            var book =  await _context.Books.Include(x => x.Cover)
+                .FirstOrDefaultAsync(b => b.Id == id);
+            return book;
         }
 
         public async Task AddBookAsync(Book book)

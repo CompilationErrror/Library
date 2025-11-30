@@ -1,69 +1,62 @@
 ﻿using DataModelLibrary.Models;
+using LibraryApi.Extensions;
 using LibraryApi.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 
 namespace LibraryApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _customerService;
-        public UserController( IUserService customerService)
+        private readonly IUserService _usererService;
+        public UserController( IUserService userService)
         {
-            _customerService = customerService; 
+            _usererService = userService; 
         }
 
-        [HttpGet("/GetUsers")]
+        [HttpGet]
         public async Task<ActionResult<List<User>>> GetUsers()
         {
-            return Ok(await _customerService.GetUsersAsync());
+            return Ok(await _usererService.GetUsersAsync());
         }
 
-        [HttpGet("/GetUserById")]
-        public async Task<ActionResult<User>> GetUserById()
+        [HttpGet("{id}")]
+        public async Task<ActionResult<User>> GetUserById([FromRoute]Guid id)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest("Invalid user token");
-            }
-            var user = await _customerService.GetUserByIdAsync(userId);
+            var user = await _usererService.GetUserByIdAsync(id);
             return Ok(user);
         }
 
-        [HttpGet("/GetUserStats")]
+        [HttpGet("/stats")]
         public async Task<ActionResult<UserStats>> GetUserStats() 
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest("Invalid user token");
-            }
-            var userStats = await _customerService.GetUserStatsAsync(userId);
+            var userId = User.GetUserId();
+
+            var userStats = await _usererService.GetUserStatsAsync(userId);
             return Ok(userStats);
         }
 
-        [HttpPut("/UpdateUser")]
+        [HttpPut]
         public async Task<IActionResult> UpdateUser(UserUpdateModel userToUpdate) 
         {
-            await _customerService.UpdateUserAsync(userToUpdate);
+            await _usererService.UpdateUserAsync(userToUpdate);
             return NoContent();
         }
 
-        [HttpPost("/AddUser")]
+        [HttpPost]
         public async Task<IActionResult> AddUser(User customer)
         {
-            await _customerService.AddUserAsync(customer);
+            await _usererService.AddUserAsync(customer);
             return Created();
         }
 
-        [HttpDelete("/DeleteUser")]
-        public async Task<IActionResult> DeleteUser([Required] Guid id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] Guid id)
         {
-            await _customerService.DeleteUserAsync(id);
+            await _usererService.DeleteUserAsync(id);
             return NoContent();
         }
     }

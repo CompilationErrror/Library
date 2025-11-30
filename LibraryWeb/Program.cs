@@ -1,4 +1,6 @@
 using Blazored.LocalStorage;
+using LibraryWeb.Services;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -15,6 +17,11 @@ namespace LibraryWeb
 
             builder.Services.AddScoped<AuthenticationHandler>();
             builder.Services.AddScoped<AuthenticationStateService>();
+
+            builder.Services.AddScoped<IAuthenticationServiceClient, AuthenticationServiceClient>();
+            builder.Services.AddScoped<IBookServiceClient, BookServiceClient>();
+            builder.Services.AddScoped<IOrderServiceClient, OrderServiceClient>();
+            builder.Services.AddScoped<IUserProfileServiceClient, UserProfileServiceClient>();
 
             builder.Services.AddHttpClient("AuthClient", client =>
             {

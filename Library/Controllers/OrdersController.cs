@@ -1,5 +1,7 @@
 ﻿using DataModelLibrary.Models;
+using LibraryApi.Extensions;
 using LibraryApi.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -8,6 +10,7 @@ namespace LibraryApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -17,31 +20,25 @@ namespace LibraryApi.Controllers
             _orderService = orderService;
         }
 
-        [HttpPost("/OrderBook")]
-        public async Task<IActionResult> OrderBook([Required] int bookId)
+        [HttpGet]
+        public async Task<ActionResult<List<OrderedBook>>> GetOrderedBooks()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest("Invalid user token");
-            }
-            await _orderService.PlaceBookOrder(bookId, userId);
-            return NoContent();                
-        }
+            var userId = User.GetUserId();
 
-        [HttpGet("/GetOrderedBooksAsync")]
-        public async Task<ActionResult<List<OrderedBook>>> GetOrderedBooksAsync() 
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest("Invalid user token");
-            }
-            var orderedBooks = await _orderService.GetOrderedBooksByUserId(userId);
+            var orderedBooks = await _orderService.GetOrderedBooksByUserIdAsync(userId);
             return Ok(orderedBooks);
         }
 
-        [HttpDelete("/ReturnBook")]
+        [HttpPost("{id}")]
+        public async Task<IActionResult> OrderBook([FromRoute] int id)
+        {
+            var userId = User.GetUserId();
+
+            await _orderService.PlaceBookOrderAsync(id, userId);
+            return NoContent();                
+        }
+
+        [HttpDelete]
         public async Task<IActionResult> DeleteOrderedBook([FromBody] List<int> bookIds)
         {
             await _orderService.DeleteOrderedBooksByIdAsync(bookIds);

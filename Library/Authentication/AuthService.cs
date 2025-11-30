@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using DataModelLibrary.AuthRequestModels;
+﻿using DataModelLibrary.AuthRequestModels;
 using DataModelLibrary.Models;
 using LibraryApi.Authentication.TokenStore;
 using LibraryApi.Data;
@@ -33,22 +32,20 @@ namespace LibraryApi.Authentication
         public async Task<bool> ValidateTokenAsync(string token)
         {
             if (string.IsNullOrEmpty(token))
+            {
                 return false;
+            }
 
             try
             {
-                var principal = GetPrincipalFromToken(token);
-                if (principal?.Identity?.Name == null)
+                var principal = GetPrincipalFromToken(token, validateLifetime: true);
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!Guid.TryParse(userId, out var userGuid))
                     return false;
 
-                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (Guid.TryParse(userId, out var userGuid))
-                {
-                    var user = await _context.Users.FindAsync(userGuid);
-                    return user != null;
-                }
-
-                return true;
+                var user = await _context.Users.FindAsync(userGuid);
+                return user != null;
             }
             catch
             {
@@ -56,13 +53,15 @@ namespace LibraryApi.Authentication
             }
         }
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        public async Task<IssuedTokens> LoginAsync(LoginRequest request)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(c => c.Username == request.Username);
 
             if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
+            {
                 throw new Exception("Invalid username or password");
+            }
 
             var accessToken = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
@@ -70,15 +69,10 @@ namespace LibraryApi.Authentication
 
             await _tokenStore.StoreAsync(user.Id, refreshToken, expiresAt);
 
-            return new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = expiresAt
-            };
+            return new IssuedTokens(accessToken, refreshToken, expiresAt);
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        public async Task<IssuedTokens> RegisterAsync(RegisterRequest request)
         {
             if (await _context.Users.AnyAsync(c => c.Username == request.Username))
             {
@@ -108,12 +102,7 @@ namespace LibraryApi.Authentication
 
             await _tokenStore.StoreAsync(user.Id, refreshToken, expiresAt);
 
-            return new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = expiresAt
-            };
+            return new IssuedTokens(accessToken, refreshToken, expiresAt);
         }
 
         public async Task LogoutAsync(string accessToken, string refreshToken)
@@ -127,43 +116,54 @@ namespace LibraryApi.Authentication
 
             try
             {
-                var principal = GetPrincipalFromToken(token);
-                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var principal = GetPrincipalFromToken(token, validateLifetime: true);
+                var userIdString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (!Guid.TryParse(userId, out var userGuid))
+                if (!Guid.TryParse(userIdString, out var userId))
                 {
                     throw new Exception("Invalid token");
                 }
 
+                var stored = await _tokenStore.GetAsync(refreshToken);
+                if (stored == null || stored.Value.UserId != userId)
+                {
+                    throw new Exception("Refresh token does not belong to user");
+                }
+
                 await _tokenStore.RevokeAsync(refreshToken);
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception("Failed to logout user", ex);
+                throw new Exception("Failed to logout user");
             }
         }
 
-        public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
+        public async Task<IssuedTokens> RefreshTokenAsync(string refreshToken)
         {
-            var principal = GetPrincipalFromToken(request.AccessToken);
-            var username = principal.Identity?.Name;
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new Exception("Refresh token is required");
+            }
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == username);
+            var stored = await _tokenStore.GetAsync(refreshToken);
+            if (stored == null)
+            {
+                throw new Exception("Invalid refresh token");
+            }
 
+            if (stored.Value.ExpiresAt < DateTime.UtcNow)
+            {
+                await _tokenStore.RevokeAsync(refreshToken);
+                throw new Exception("Refresh token expired");
+            }
+
+            var user = await _context.Users.FindAsync(stored.Value.UserId);
             if (user == null)
             {
                 throw new Exception("User not found");
             }
 
-            var existing = await _tokenStore.GetAsync(request.RefreshToken);
-
-            if (existing == null || existing.Value.IsRevoked || existing.Value.ExpiresAt < DateTime.UtcNow)
-            {
-                throw new Exception("Invalid refresh token");
-            }
-
-            await _tokenStore.RevokeAsync(request.RefreshToken);
+            await _tokenStore.RevokeAsync(refreshToken);
 
             var newRefreshToken = GenerateRefreshToken();
             var newExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpirationMinutes);
@@ -172,43 +172,40 @@ namespace LibraryApi.Authentication
 
             var newAccessToken = GenerateJwtToken(user);
 
-            return new AuthResponse
-            {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken,
-                ExpiresAt = newExpiresAt
-            };
+            return new IssuedTokens(newAccessToken, newRefreshToken, newExpiresAt);
         }
 
         private string GenerateRefreshToken()
         {
-            var randomNumber = new byte[32];
+            var randomBytes = new byte[32];
             using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
         }
 
-        private ClaimsPrincipal GetPrincipalFromToken(string token)
+        private ClaimsPrincipal GetPrincipalFromToken(string token, bool validateLifetime)
         {
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateAudience = true,
                 ValidateIssuer = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                    _configuration["JwtSettings:Key"] ?? throw new InvalidOperationException("JWT Key not configured"))),
-                ValidateLifetime = false,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]
+                    ?? throw new InvalidOperationException("JWT Key not configured"))),
+
+                ValidateLifetime = validateLifetime,
+
                 ValidIssuer = _configuration["JwtSettings:Issuer"],
                 ValidAudience = _configuration["JwtSettings:Audience"],
                 ClockSkew = TimeSpan.Zero
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            var handler = new JwtSecurityTokenHandler();
+            var principal = handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
 
-            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
-                StringComparison.InvariantCultureIgnoreCase))
+            if (validatedToken is not JwtSecurityToken jwt ||
+                !jwt.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
                 throw new SecurityTokenException("Invalid token");
             }

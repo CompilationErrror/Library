@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using DataModelLibrary.AuthRequestModels;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
@@ -12,7 +13,7 @@ public class AuthenticationHandler : DelegatingHandler
     private readonly NavigationManager _navigationManager;
     private readonly string _baseAddress;
 
-    private const int AccessTokenEarlyRefreshMinutes = 2; // Refresh access token 2 minutes before it expires
+    private const int AccessTokenEarlyRefreshMinutes = 2;
     private static readonly SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
 
     public AuthenticationHandler(
@@ -28,34 +29,31 @@ public class AuthenticationHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
+        try
+        {
+            request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+        }
+        catch { }
+
         if (request.RequestUri?.AbsolutePath.Contains("/api/Authentication/") == true)
         {
             return await base.SendAsync(request, cancellationToken);
         }
 
         var accessToken = await _localStorage.GetItemAsync<string>("authToken");
-        var refreshToken = await _localStorage.GetItemAsync<string>("refreshToken");
 
         if (!string.IsNullOrWhiteSpace(accessToken))
         {
             if (IsAccessTokenExpiredOrNearExpiry(accessToken))
             {
-                if (!string.IsNullOrWhiteSpace(refreshToken))
-                {
-                    var refreshSucceeded = await TryRefreshTokenAsync(accessToken, refreshToken);
-                    if (!refreshSucceeded)
-                    {
-                        await ClearTokensAndRedirect();
-                        return new HttpResponseMessage(HttpStatusCode.Unauthorized);
-                    }
-
-                    accessToken = await _localStorage.GetItemAsync<string>("authToken");
-                }
-                else
+                var refreshSucceeded = await TryRefreshTokenAsync(accessToken);
+                if (!refreshSucceeded)
                 {
                     await ClearTokensAndRedirect();
                     return new HttpResponseMessage(HttpStatusCode.Unauthorized);
                 }
+
+                accessToken = await _localStorage.GetItemAsync<string>("authToken");
             }
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -82,11 +80,11 @@ public class AuthenticationHandler : DelegatingHandler
         }
         catch
         {
-            return true; 
+            return true;
         }
     }
 
-    private async Task<bool> TryRefreshTokenAsync(string currentAccessToken, string refreshToken)
+    private async Task<bool> TryRefreshTokenAsync(string currentAccessToken)
     {
         await _refreshLock.WaitAsync();
         try
@@ -100,13 +98,15 @@ public class AuthenticationHandler : DelegatingHandler
 
             using var httpClient = new HttpClient { BaseAddress = new Uri(_baseAddress) };
 
-            var response = await httpClient.PostAsJsonAsync("api/Authentication/RefreshToken",
-                new RefreshTokenRequest
-                {
-                    AccessToken = currentAccessToken,
-                    RefreshToken = refreshToken
-                });
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/Authentication/RefreshToken");
 
+            try
+            {
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+            }
+            catch { }
+
+            var response = await httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
                 return false;
 
@@ -115,7 +115,6 @@ public class AuthenticationHandler : DelegatingHandler
                 return false;
 
             await _localStorage.SetItemAsync("authToken", refreshResponse.AccessToken);
-            await _localStorage.SetItemAsync("refreshToken", refreshResponse.RefreshToken);
 
             return true;
         }
@@ -132,7 +131,6 @@ public class AuthenticationHandler : DelegatingHandler
     private async Task ClearTokensAndRedirect()
     {
         await _localStorage.RemoveItemAsync("authToken");
-        await _localStorage.RemoveItemAsync("refreshToken");
         _navigationManager.NavigateTo("/login", forceLoad: true);
     }
 }

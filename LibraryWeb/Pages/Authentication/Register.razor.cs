@@ -1,17 +1,15 @@
 ﻿using DataModelLibrary.AuthRequestModels;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 
 namespace LibraryWeb.Pages.Authentication
 {
     public partial class Register
     {
         [Inject]
-        private HttpClient HttpClient { get; set; } = default!;
-        [Inject]
-        private AuthenticationStateService AuthStateService { get; set; } = default!;
+        private IAuthenticationServiceClient AuthService { get; set; } = default!;
 
         private MudForm form;
         private bool success;
@@ -27,8 +25,7 @@ namespace LibraryWeb.Pages.Authentication
 
         protected override async Task OnInitializedAsync()
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
-            _isLoggedIn = !string.IsNullOrEmpty(token);
+            _isLoggedIn = await AuthService.IsAuthenticatedAsync();
 
             if (_isLoggedIn)
             {
@@ -87,28 +84,16 @@ namespace LibraryWeb.Pages.Authentication
 
         private async Task HandleRegister()
         {
-            try
+            var result = await AuthService.RegisterAsync(registerRequest);
+
+            if (result.IsSuccess)
             {
-                var response = await HttpClient.PostAsJsonAsync("api/Authentication/Register", registerRequest);
-                if (response.IsSuccessStatusCode)
-                {
-                    var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                    if (authResponse != null)
-                    {
-                        await AuthStateService.SetAuthenticationState(authResponse.AccessToken, authResponse.RefreshToken);
-                        NavigationManager.NavigateTo("/");
-                        Snackbar.Add("Registration successful!", Severity.Success);
-                    }
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Snackbar.Add(error, Severity.Error);
-                }
+                NavigationManager.NavigateTo("/");
+                Snackbar.Add("Registration successful!", Severity.Success);
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+                Snackbar.Add(result.ErrorMessage, Severity.Error);
             }
         }
     }

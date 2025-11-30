@@ -9,6 +9,7 @@ namespace LibraryApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CoverImagesController : ControllerBase
     {
         private readonly ICoverImagesService _coverImagesService;
@@ -17,16 +18,16 @@ namespace LibraryApi.Controllers
             _coverImagesService = coverImagesService;
         }
 
-        [HttpGet("/GetCover")]
-        public async Task<IActionResult> GetCover([Required]int id = 0)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCover([FromRoute]int id = 0)
         {
             var coverUri = await _coverImagesService.GetCoverAsync(id);
             return Ok(coverUri);
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPost("/AddCover")]
-        public async Task<IActionResult> AddCover(IFormFile coverImg, int bookId)
+        [HttpPost("{bookId}")]
+        public async Task<IActionResult> AddCover(IFormFile coverImg,[FromRoute] int bookId)
         {
             if (coverImg == null || coverImg.Length == 0)
             {
@@ -39,8 +40,8 @@ namespace LibraryApi.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpDelete("/DeleteCover")]
-        public async Task<IActionResult> DeleteCover([Required] int bookId)
+        [HttpDelete("{bookId}")]
+        public async Task<IActionResult> DeleteCover([FromRoute] int bookId)
         {
             await _coverImagesService.DeleteCoverAsync(bookId);
             return NoContent();

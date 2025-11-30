@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Net.Http.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
 namespace LibraryWeb.Layout
 {
@@ -32,13 +35,21 @@ namespace LibraryWeb.Layout
             try
             {
                 var accessToken = await LocalStorage.GetItemAsync<string>("authToken");
-                var refreshToken = await LocalStorage.GetItemAsync<string>("refreshToken");
-
                 if (!string.IsNullOrEmpty(accessToken))
                 {
-                    Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                    Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                    var response = await Http.PostAsJsonAsync("api/Authentication/Logout", refreshToken);
+                    using var request = new HttpRequestMessage(HttpMethod.Post, "api/Authentication/Logout");
+                    try
+                    {
+                        request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                    }
+                    catch
+                    {
+
+                    }
+
+                    var response = await Http.SendAsync(request);
 
                     if (!response.IsSuccessStatusCode)
                     {

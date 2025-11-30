@@ -1,17 +1,18 @@
-using Microsoft.EntityFrameworkCore;
+using Jose;
+using LibraryApi.Authentication;
+using LibraryApi.Authentication.TokenStore;
 using LibraryApi.Data;
+using LibraryApi.Extensions;
 using LibraryApi.Infrastructure.Interfaces;
 using LibraryApi.Infrastructure.Services;
 using LibraryApi.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using LibraryApi.Authentication;
-using System.Threading.RateLimiting;
-using LibraryApi.Extensions;
-using Jose;
 using Serilog;
-using LibraryApi.Authentication.TokenStore;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +56,15 @@ builder.Services.AddCors(options =>
             .WithOrigins("https://localhost:7097")
             .AllowAnyMethod()
             .AllowAnyHeader()
-    );
+            .AllowCredentials()
+    ); 
+});
+
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.HttpOnly = HttpOnlyPolicy.Always;
+    options.Secure = CookieSecurePolicy.Always;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

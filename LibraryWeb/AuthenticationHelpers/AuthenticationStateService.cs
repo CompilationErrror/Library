@@ -12,7 +12,7 @@ public class AuthenticationStateService
 
     private bool? _isAuthenticated;
     private DateTime _lastValidated = DateTime.MinValue;
-    private TimeSpan _validationInterval = TimeSpan.FromMinutes(30); 
+    private TimeSpan _validationInterval = TimeSpan.FromMinutes(30);
 
     public event Action? AuthenticationChanged;
 
@@ -22,10 +22,9 @@ public class AuthenticationStateService
         _httpClient = httpClient;
     }
 
-    public async Task SetAuthenticationState(string accessToken, string refreshToken)
+    public async Task SetAuthenticationState(string accessToken)
     {
         await _localStorage.SetItemAsync("authToken", accessToken);
-        await _localStorage.SetItemAsync("refreshToken", refreshToken);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         _isAuthenticated = true;
@@ -37,7 +36,6 @@ public class AuthenticationStateService
     public async Task ClearAuthenticationState()
     {
         await _localStorage.RemoveItemAsync("authToken");
-        await _localStorage.RemoveItemAsync("refreshToken");
         _httpClient.DefaultRequestHeaders.Authorization = null;
 
         _isAuthenticated = false;
@@ -74,7 +72,7 @@ public class AuthenticationStateService
         return _isAuthenticated.Value;
     }
 
-    public async Task<bool> IsAdmin() 
+    public async Task<bool> IsAdmin()
     {
         var token = await _localStorage.GetItemAsync<string>("authToken");
         if (!string.IsNullOrEmpty(token))

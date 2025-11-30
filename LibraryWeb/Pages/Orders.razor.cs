@@ -1,4 +1,6 @@
 ﻿using DataModelLibrary.Models;
+using LibraryWeb.Services;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Net.Http.Json;
@@ -8,13 +10,12 @@ namespace LibraryWeb.Pages
     public partial class Orders
     {
         [Inject]
-        private HttpClient HttpClient { get; set; } = default!;
+        private AuthenticationStateService AuthService { get; set; } = default!;
+        [Inject]
+        private IOrderServiceClient OrderService { get; set; } = default!;
 
         [Inject]
         private ISnackbar _snackbar { get; set; }
-
-        [Inject]
-        private AuthenticationStateService AuthStateService { get; set; } = default!;
 
         private bool _isPageLoading = true;
         private bool _isDataLoading = true;
@@ -25,7 +26,7 @@ namespace LibraryWeb.Pages
         private bool _isAuthorized = false;
         protected override async Task OnInitializedAsync()
         {
-            _isAuthorized = await AuthStateService.IsAuthenticated();
+            _isAuthorized = await AuthService.IsAuthenticated();
             _isPageLoading = false;
 
             if (_isAuthorized)
@@ -36,7 +37,19 @@ namespace LibraryWeb.Pages
 
         private async Task LoadOrderedBooks()
         {
-            _orderedBooks = await HttpClient.GetFromJsonAsync<List<OrderedBook>>($"GetOrderedBooksAsync");
+            var result = await OrderService.GetOrderedBooksAsync();
+
+            if (result.IsSuccess)
+            {
+                _orderedBooks = result.Data ?? new List<OrderedBook>();
+            }
+            else
+            {
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
+                _orderedBooks = new List<OrderedBook>();
+                _isDataLoading = false;
+                return;
+            }
             _selectedBooks.Clear();
 
             _isDataLoading = false;
@@ -60,22 +73,16 @@ namespace LibraryWeb.Pages
 
         private async Task ReturnBooks(List<int> bookIds)
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, "ReturnBook")
-            {
-                Content = JsonContent.Create(bookIds)
-            };
+            var response = await OrderService.ReturnBooksAsync(bookIds);
 
-            var response = await HttpClient.SendAsync(request);
-
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccess)
             {
                 _snackbar.Add($"Books were successfully returned", Severity.Success);
                 return;
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error returning book(s)': {errorMessage}", Severity.Error);
+                _snackbar.Add($"Error returning book(s)': {response.ErrorMessage}", Severity.Error);
             }
         }
 

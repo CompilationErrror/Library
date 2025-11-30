@@ -1,14 +1,14 @@
 ﻿using DataModelLibrary.Models;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System.Net.Http.Json;
 
 namespace LibraryWeb.Pages
 {
     public partial class UserProfile
     {
         [Inject]
-        private HttpClient HttpClient { get; set; } = default!;
+        private IUserProfileServiceClient UserProfileServiceClient { get; set; } = default!;
 
         [Inject]
         private ISnackbar _snackbar { get; set; }
@@ -53,54 +53,45 @@ namespace LibraryWeb.Pages
 
         private async Task LoadUserData()
         {
-            var token = await LocalStorage.GetItemAsync<string>("authToken");
+            var response = await UserProfileServiceClient.GetUserByIdAsync();
 
-            if (!string.IsNullOrEmpty(token))
+            if (response.IsSuccess && response.Data != null)
             {
-                var userResponse = await HttpClient.GetAsync($"GetUserById");
-
-                if (userResponse.IsSuccessStatusCode)
+                _user = response.Data;
+                _userEdit = new User
                 {
-                    try
-                    {
-                        _user = await userResponse.Content.ReadFromJsonAsync<User>();
-                    }
-                    catch (Exception ex)
-                    {
-                        _snackbar.Add($"Error loading user data: {ex.Message}", Severity.Error);
-                    }
-                    _userEdit = new User
-                    {
-                        Id = _user.Id,
-                        Name = _user.Name,
-                        Surname = _user.Surname,
-                        Email = _user.Email,
-                        Username = _user.Username,
-                        IsAdmin = _user.IsAdmin
-                    };
+                    Id = _user.Id,
+                    Name = _user.Name,
+                    Surname = _user.Surname,
+                    Email = _user.Email,
+                    Username = _user.Username,
+                    IsAdmin = _user.IsAdmin
+                };
 
-                    _originalName = _user.Name;
-                    _originalSurname = _user.Surname;
-                    _originalEmail = _user.Email;
-                }
-                else
-                {
-                    var errorMessage = await userResponse.Content.ReadAsStringAsync();
-                    _snackbar.Add($"Error loading user data: {errorMessage}", Severity.Error);
-                }
+                _originalName = _user.Name;
+                _originalSurname = _user.Surname;
+                _originalEmail = _user.Email;
+            }
+            else
+            {
+                _snackbar.Add($"Error loading user data: {response.ErrorMessage}", Severity.Error);
             }
         }
 
         private async Task LoadUserStatistics()
         {
-            var statsResponse = await HttpClient.GetAsync($"GetUserStats");
+            var response = await UserProfileServiceClient.GetUserStatsAsync();
 
-            if (statsResponse.IsSuccessStatusCode)
+            if (response.IsSuccess && response.Data != null)
             {
-                var stats = await statsResponse.Content.ReadFromJsonAsync<UserStats>();
+                var stats = response.Data;
                 _currentlyBorrowed = stats.CurrentlyBorrowed;
                 _booksReturned = stats.BooksReturned;
                 _overdueBooks = stats.OverdueBooks;
+            }
+            else
+            {
+                _snackbar.Add($"Error loading user statistics: {response.ErrorMessage}", Severity.Error);
             }
         }
 
@@ -161,7 +152,6 @@ namespace LibraryWeb.Pages
 
         private async Task UpdateUserProfile(bool includePassword)
         {
-
             var updateModel = new UserUpdateModel
             {
                 UserId = _userEdit.Id
@@ -182,9 +172,9 @@ namespace LibraryWeb.Pages
                 updateModel.NewPassword = _newPassword;
             }
 
-            var response = await HttpClient.PutAsJsonAsync("UpdateUser", updateModel);
+            var response = await UserProfileServiceClient.UpdateUserAsync(updateModel);
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccess)
             {
                 _snackbar.Add("Profile updated successfully", Severity.Success);
 
@@ -204,8 +194,7 @@ namespace LibraryWeb.Pages
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error updating profile: {errorMessage}", Severity.Error);
+                _snackbar.Add($"Error updating profile: {response.ErrorMessage}", Severity.Error);
             }
 
             StateHasChanged();

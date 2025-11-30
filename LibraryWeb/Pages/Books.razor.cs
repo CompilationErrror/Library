@@ -1,21 +1,20 @@
 ﻿using DataModelLibrary.Models;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Json;
-using System.Security.Claims;
 
 namespace LibraryWeb.Pages
 {
     public partial class Books
     {
         [Inject]
-        private HttpClient HttpClient { get; set; } = default!;
+        private IBookServiceClient BookService { get; set; } = default!;
 
         [Inject]
         private ISnackbar _snackbar { get; set; }
+
         [Inject]
         private AuthenticationStateService AuthStateService { get; set; } = default!;
 
@@ -56,7 +55,6 @@ namespace LibraryWeb.Pages
             if (_isAuthorized)
             {
                 _isAdmin = await AuthStateService.IsAdmin();
-
                 await LoadBooks();
             }
 
@@ -65,34 +63,26 @@ namespace LibraryWeb.Pages
 
         private async Task LoadBooks()
         {
-            try
+            var result = await BookService.GetBooksAsync();
+
+            if (result.IsSuccess)
             {
-                _books = await HttpClient.GetFromJsonAsync<List<Book>>("GetBooks");
+                _books = result.Data ?? new List<Book>();
             }
-            catch (Exception ex)
+            else
             {
-                _snackbar.Add($"Error loading books: {ex.Message}", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
                 _books = new List<Book>();
             }
-            finally 
-            {
-                _isDataLoading = false;
-            }
+
+            _isDataLoading = false;
         }
 
         private async Task GetBookCover(Book book)
         {
-            var response = await HttpClient.GetAsync($"GetCover?id={book.Id}");
-            if (response.IsSuccessStatusCode)
-            {
-                var imageUri = await response.Content.ReadAsStringAsync();
-                _bookCoverUrl = imageUri;
-            }
-            else
-            {
-                _bookCoverUrl = "";
-            }
+            var result = await BookService.GetBookCoverAsync(book.Id);
 
+            _bookCoverUrl = result.IsSuccess ? result.Data : "";
             _selectedBook = book;
             _showDialog = true;
         }
@@ -101,46 +91,42 @@ namespace LibraryWeb.Pages
         {
             if (_coverImage != null && _coverImage.Any())
             {
-                var response = await HttpClient.PostAsync($"AddCover?bookId={_selectedBook.Id}", new MultipartFormDataContent
-                {
-                    { new StreamContent(_coverImage.First().OpenReadStream()), "coverImg", _coverImage.First().Name }
-                });
+                var result = await BookService.UploadBookCoverAsync(_selectedBook.Id, _coverImage.First());
 
-                if (response.IsSuccessStatusCode)
+                if (result.IsSuccess)
                 {
-                    _bookCoverUrl = await response.Content.ReadAsStringAsync();
-                        
+                    _bookCoverUrl = result.Data;
                     _snackbar.Add("Cover image uploaded successfully.", Severity.Success);
                     await InvokeAsync(StateHasChanged);
                 }
                 else
                 {
-                    _snackbar.Add($"Error uploading cover image: {response.StatusCode}", Severity.Error);
+                    _snackbar.Add(result.ErrorMessage, Severity.Error);
                 }
             }
         }
 
         private async Task DeleteCover()
         {
-            var response = await HttpClient.DeleteAsync($"DeleteCover?bookId={_selectedBook.Id}");
+            var result = await BookService.DeleteBookCoverAsync(_selectedBook.Id);
 
-            if (response.IsSuccessStatusCode)
+            if (result.IsSuccess)
             {
                 _snackbar.Add("Cover image deleted successfully.", Severity.Success);
                 _bookCoverUrl = "";
                 await InvokeAsync(StateHasChanged);
             }
-            else 
+            else
             {
-                _snackbar.Add("Problem occur while deleting cover image.", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
             }
         }
 
-        private async Task OrderBook() 
+        private async Task OrderBook()
         {
-            var orderResponse = await HttpClient.PostAsync($"OrderBook?bookId={_selectedBook.Id}", null);
+            var result = await BookService.OrderBookAsync(_selectedBook.Id);
 
-            if (orderResponse.IsSuccessStatusCode)
+            if (result.IsSuccess)
             {
                 _snackbar.Add("Book ordered successfully", Severity.Success);
                 CloseDialog();
@@ -149,8 +135,7 @@ namespace LibraryWeb.Pages
             }
             else
             {
-                var errorMessage = await orderResponse.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error ordering book: {errorMessage}", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
             }
         }
 
@@ -164,9 +149,9 @@ namespace LibraryWeb.Pages
 
             _isAddingBook = true;
 
-            var response = await HttpClient.PostAsJsonAsync("AddBook", _newBook);
+            var result = await BookService.AddBookAsync(_newBook);
 
-            if (response.IsSuccessStatusCode)
+            if (result.IsSuccess)
             {
                 _snackbar.Add("Book added successfully.", Severity.Success);
                 await LoadBooks();
@@ -174,8 +159,7 @@ namespace LibraryWeb.Pages
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error adding book: {errorMessage}", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
             }
 
             _isAddingBook = false;
@@ -198,9 +182,9 @@ namespace LibraryWeb.Pages
 
             _isEditingBook = true;
 
-            var response = await HttpClient.PutAsJsonAsync("ChangeBook", _bookToEdit);
+            var result = await BookService.UpdateBookAsync(_bookToEdit);
 
-            if (response.IsSuccessStatusCode)
+            if (result.IsSuccess)
             {
                 _snackbar.Add("Book updated successfully.", Severity.Success);
                 await LoadBooks();
@@ -208,12 +192,12 @@ namespace LibraryWeb.Pages
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error updating book: {errorMessage}", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
             }
 
             _isEditingBook = false;
         }
+
         private void DeleteBookClick(Book book)
         {
             _bookToDelete = book;
@@ -223,21 +207,17 @@ namespace LibraryWeb.Pages
 
         private async Task ConfirmDeleteBook()
         {
-            await HttpClient.DeleteAsync($"DeleteCover?bookId={_bookToDelete.Id}");
+            var result = await BookService.DeleteBookAsync(_bookToDelete.Id);
 
-            var response = await HttpClient.DeleteAsync($"DeleteBook?id={_bookToDelete.Id}");
-
-            if (response.IsSuccessStatusCode)
+            if (result.IsSuccess)
             {
                 _snackbar.Add("Book deleted successfully.", Severity.Success);
                 await LoadBooks();
             }
             else
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                _snackbar.Add($"Error deleting book: {errorMessage}", Severity.Error);
+                _snackbar.Add(result.ErrorMessage, Severity.Error);
             }
-
 
             _showDeleteDialog = false;
             _bookToDelete = null;
@@ -257,7 +237,7 @@ namespace LibraryWeb.Pages
 
         private void OpenAddBookDialog()
         {
-            _newBook = new Book(); 
+            _newBook = new Book();
             _showAddBookDialog = true;
         }
 
@@ -273,8 +253,8 @@ namespace LibraryWeb.Pages
         private void CloseAddBookDialog()
         {
             _showAddBookDialog = false;
-            _newBook = new Book(); 
-            _isAddingBook = false; 
+            _newBook = new Book();
+            _isAddingBook = false;
         }
 
         private void CloseEditBookDialog()
@@ -283,6 +263,7 @@ namespace LibraryWeb.Pages
             _bookToEdit = new Book();
             _isEditingBook = false;
         }
+
         private async void HandleAuthenticationChanged()
         {
             _isAuthorized = await AuthStateService.IsAuthenticated();
@@ -290,7 +271,6 @@ namespace LibraryWeb.Pages
             if (_isAuthorized)
             {
                 _isAdmin = await AuthStateService.IsAdmin();
-
                 await LoadBooks();
             }
 
@@ -316,6 +296,7 @@ namespace LibraryWeb.Pages
                 _fileNames.Add(file.Name);
             }
         }
+
         private void SetDragClass()
             => _dragClass = $"{DefaultDragClass} mud-border-primary";
 
