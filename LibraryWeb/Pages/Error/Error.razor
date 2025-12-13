@@ -1,0 +1,26 @@
+﻿@page "/error"
+
+<MudPaper Class="pa-6 mx-auto mt-12 d-flex flex-column align-center justify-center"
+          Elevation="4"
+          Style="max-width: 400px;">
+
+    <MudIcon Icon="@Icons.Material.Filled.ErrorOutline"
+             Color="Color.Error"
+             Size="Size.Large"
+             Class="mb-3" />
+
+    <MudText Typo="Typo.h5" Class="mb-2" Align="Align.Center">
+        Oops, something went wrong 🙁
+    </MudText>
+
+    <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">
+        Please try again.
+    </MudText>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Href="/"
+               StartIcon="@Icons.Material.Filled.Home">
+        Return Home
+    </MudButton>
+</MudPaper>

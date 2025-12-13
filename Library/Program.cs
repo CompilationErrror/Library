@@ -113,7 +113,12 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<LibraryContext>();
     try
     {
-        context.Database.EnsureCreated(); 
+        context.Database.EnsureCreated();
+
+        if (app.Environment.IsDevelopment())
+        {
+            await DatabaseSeeder.SeedDataAsync(context);
+        }
     }
     catch (Exception ex)
     {

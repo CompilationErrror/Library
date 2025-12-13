@@ -16,6 +16,6 @@ namespace DataModelLibrary.Models
         public virtual OrderedBook? OrderedBook { get; set; }
 
         [JsonIgnore]
-        public virtual CoverImages? Cover { get; set; }
+        public virtual CoverImage? Cover { get; set; }
     }
 }

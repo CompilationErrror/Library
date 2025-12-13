@@ -28,6 +28,18 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
+    <script>
+        window.addEventListener("error", function (event) {
+            console.error("JS Error:", event.error);
+            DotNet.invokeMethodAsync("LibraryWeb", "HandleJsError", event.message);
+        });
+        window.addEventListener("unhandledrejection", function (event) {
+            console.error("Unhandled Promise:", event.reason);
+            DotNet.invokeMethodAsync("LibraryWeb", "HandleJsError", event.reason);
+        });
+    </script>
+
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

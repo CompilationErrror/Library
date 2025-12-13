@@ -1,4 +1,6 @@
 using Blazored.LocalStorage;
+using LibraryWeb.Exceptions;
+using LibraryWeb.Pages.Error;
 using LibraryWeb.Services;
 using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Web;
@@ -23,6 +25,10 @@ namespace LibraryWeb
             builder.Services.AddScoped<IOrderServiceClient, OrderServiceClient>();
             builder.Services.AddScoped<IUserProfileServiceClient, UserProfileServiceClient>();
 
+            builder.Services.AddScoped<ErrorBoundaryLogger>();
+            builder.Services.AddScoped<GlobalErrorHandler>();
+            builder.Services.AddSingleton<JsErrorHandler>();
+
             builder.Services.AddHttpClient("AuthClient", client =>
             {
                 client.BaseAddress = new Uri("https://localhost:7121/");
@@ -34,7 +40,10 @@ namespace LibraryWeb
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddMudServices();
 
-            await builder.Build().RunAsync();
+            var host = builder.Build();
+            await host.RunAsync();
+
+            var jsHandler = host.Services.GetRequiredService<JsErrorHandler>();
         }
     }
 }

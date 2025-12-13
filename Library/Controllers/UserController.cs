@@ -30,7 +30,16 @@ namespace LibraryApi.Controllers
             return Ok(user);
         }
 
-        [HttpGet("/stats")]
+        [HttpGet("me")]
+        public async Task<ActionResult<User>> GetActiveUser()
+        {
+            var userId = User.GetUserId();
+
+            var user = await _usererService.GetUserByIdAsync(userId);
+            return Ok(user);
+        }
+
+        [HttpGet("stats")]
         public async Task<ActionResult<UserStats>> GetUserStats() 
         {
             var userId = User.GetUserId();

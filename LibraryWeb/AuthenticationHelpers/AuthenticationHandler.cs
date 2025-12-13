@@ -26,8 +26,8 @@ public class AuthenticationHandler : DelegatingHandler
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken)
+    HttpRequestMessage request,
+    CancellationToken cancellationToken)
     {
         try
         {
@@ -35,7 +35,7 @@ public class AuthenticationHandler : DelegatingHandler
         }
         catch { }
 
-        if (request.RequestUri?.AbsolutePath.Contains("/api/Authentication/") == true)
+        if (request.RequestUri?.AbsolutePath.StartsWith("/api/Authentication", StringComparison.OrdinalIgnoreCase) == true)
         {
             return await base.SendAsync(request, cancellationToken);
         }
@@ -56,7 +56,8 @@ public class AuthenticationHandler : DelegatingHandler
                 accessToken = await _localStorage.GetItemAsync<string>("authToken");
             }
 
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", accessToken);
         }
 
         var response = await base.SendAsync(request, cancellationToken);

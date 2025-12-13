@@ -22,7 +22,7 @@ public partial class LibraryContext : DbContext
 
     public virtual DbSet<OrderedBook> OrderedBooks { get; set; }
 
-    public virtual DbSet<CoverImages> CoverImages { get; set; }
+    public virtual DbSet<CoverImage> CoverImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,7 +48,7 @@ public partial class LibraryContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.OrderedBooks).HasForeignKey(d => d.UserId);
         });
 
-        modelBuilder.Entity<CoverImages>(entity =>
+        modelBuilder.Entity<CoverImage>(entity =>
         {
             entity.HasKey(e => e.BookId);
 
@@ -56,7 +56,7 @@ public partial class LibraryContext : DbContext
 
             entity.HasOne(c => c.Book)
                 .WithOne(b => b.Cover)
-                .HasForeignKey<CoverImages>(c => c.BookId);
+                .HasForeignKey<CoverImage>(c => c.BookId);
         });
 
         OnModelCreatingPartial(modelBuilder);

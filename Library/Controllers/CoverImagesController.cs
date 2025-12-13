@@ -21,8 +21,13 @@ namespace LibraryApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCover([FromRoute]int id = 0)
         {
-            var coverUri = await _coverImagesService.GetCoverAsync(id);
-            return Ok(coverUri);
+            var cover = await _coverImagesService.GetCoverAsync(id);
+
+            if (cover is null)
+            {
+                return NoContent();
+            }
+            return Ok(cover.CoverImageUrl);
         }
 
         [Authorize(Roles = "Admin")]

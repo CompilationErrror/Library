@@ -11,6 +11,9 @@ namespace LibraryWeb.Services
         public Task<ApiResponse<User>> GetUserByIdAsync(Guid id)
             => GetAsync<User>($"api/User/{id}");
 
+        public Task<ApiResponse<User>> GetCurrentUserAsync()
+            => GetAsync<User>("api/User/me");
+
         public Task<ApiResponse<UserStats>> GetUserStatsAsync()
             => GetAsync<UserStats>("api/User/stats");
 

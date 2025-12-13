@@ -1,0 +1,24 @@
+﻿@using LibraryWeb.Exceptions
+
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">
+        @{
+            HandleError(exception);
+        }
+        <p>Redirecting to error page...</p>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Inject] private GlobalErrorHandler ErrorHandler { get; set; } = default!;
+    private ErrorBoundary? errorBoundary;
+
+    private void HandleError(Exception exception)
+    {
+        ErrorHandler.Handle(exception);
+    }
+}

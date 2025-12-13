@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace DataModelLibrary.Models
 {
-    public class CoverImages
+    public class CoverImage
     {
         public int BookId { get; set; }
         

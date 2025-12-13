@@ -16,13 +16,12 @@ namespace LibraryApi.Infrastructure.Services
             _blobService = blobService;
         }
 
-        public async Task<string> GetCoverAsync(int bookId)
+        public async Task<CoverImage> GetCoverAsync(int bookId)
         {
             var coverImage = await _context.CoverImages
-                .FirstOrDefaultAsync(c => c.BookId == bookId)
-                ?? throw new FileNotFoundException($"No cover found for book {bookId}");
+                .FirstOrDefaultAsync(c => c.BookId == bookId);
 
-            return coverImage.CoverImageUrl;
+            return coverImage;
         }
         public async Task<string> AddCoverAsync(int bookId, Stream imageStream, string fileName)
         {
@@ -30,7 +29,7 @@ namespace LibraryApi.Infrastructure.Services
 
             string imageUrl = await _blobService.UploadImageAsync(uniqueFileName, imageStream);
 
-            var cover = new CoverImages
+            var cover = new CoverImage
             {
                 BookId = bookId,
                 CoverImageUrl = imageUrl

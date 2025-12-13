@@ -53,7 +53,7 @@ namespace LibraryWeb.Pages
 
         private async Task LoadUserData()
         {
-            var response = await UserProfileServiceClient.GetUserByIdAsync();
+            var response = await UserProfileServiceClient.GetCurrentUserAsync();
 
             if (response.IsSuccess && response.Data != null)
             {
