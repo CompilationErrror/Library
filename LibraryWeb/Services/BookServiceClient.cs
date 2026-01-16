@@ -1,6 +1,7 @@
 ﻿using DataModelLibrary.Models;
-using LibraryWeb.Services.Interfaces;
+using DataModelLibrary.Pagination;
 using LibraryWeb.Services.Base;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace LibraryWeb.Services
@@ -9,11 +10,27 @@ namespace LibraryWeb.Services
     {
         public BookServiceClient(HttpClient httpClient) : base(httpClient) { }
 
-        public Task<ApiResponse<List<Book>>> GetBooksAsync()
-            => GetAsync<List<Book>>("api/Book");
+        public Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(int offset = 0, int limit = 10, string? sortBy = null, bool sortDescending = false)
+        {
+            var queryParams = new List<string>
+            {
+                $"offset={offset}",
+                $"limit={limit}"
+            };
+
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                queryParams.Add($"sortBy={sortBy}");
+            }
+
+            queryParams.Add($"sortDescending={sortDescending}");
+
+            var queryString = string.Join("&", queryParams);
+            return GetAsync<PagedResult<Book>>($"api/Book?{queryString}");
+        }
 
         public Task<ApiResponse<Book>> GetBookByIdAsync(int bookId)
-            => GetAsync<Book>($"api/Book/{bookId}"); 
+            => GetAsync<Book>($"api/Book/{bookId}");
 
         public Task<ApiResponse<string>> GetBookCoverAsync(int bookId)
             => GetAsync<string>($"api/CoverImages/{bookId}");

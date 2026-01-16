@@ -27,12 +27,12 @@ else
         <MudPaper Class="pa-4">
             @if (_isAdmin)
             {
-                <AdminBooksTable Books="_books" 
-                IsLoading="_isDataLoading"
-                SearchString="@_searchString"
-                OnRowClick="OnRowClick"
-                OnDeleteBook="DeleteBookClick"
-                OnEditBook="EditBookClick" />
+                <AdminBooksTable ServerData="LoadBooks"
+                                 IsLoading="_isDataLoading"
+                                 OnRowClick="OnRowClick"
+                                 OnDeleteBook="DeleteBookClick"
+                                 OnEditBook="EditBookClick" 
+                                 OnSearchChanged="OnSearchChanged"/>
 
                 <MudButton OnClick="OpenAddBookDialog" 
                 Variant="Variant.Filled" 
@@ -42,10 +42,10 @@ else
             }
             else
             {
-                <UserBooksTable Books="_books" 
-                IsLoading="_isDataLoading" 
-                SearchString="@_searchString"
-                OnRowClick="OnRowClick" />
+                <UserBooksTable ServerData="LoadBooks"
+                                IsLoading="_isDataLoading"
+                                OnRowClick="OnRowClick"
+                                OnSearchChanged="OnSearchChanged" />
             }
         </MudPaper>
     </MudContainer>

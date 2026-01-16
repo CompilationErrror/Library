@@ -1,20 +1,32 @@
 ﻿@using DataModelLibrary.Models
 
-<MudTable T="Book" Items="@Books" Dense="false" Hover="true" Loading="@IsLoading"
-          LoadingProgressColor="Color.Info" Elevation="0"
-          Filter="new Func<Book,bool>(FilterFunc)" OnRowClick="OnRowClick" RowClass="cursor-pointer">
+<MudTable T="Book" SortLabel="Sort by" 
+          @ref="_table"
+          ServerData="ServerData"
+          Dense="false" 
+          Hover="true" 
+          Loading="@IsLoading"
+          LoadingProgressColor="Color.Info" 
+          Elevation="0"
+          OnRowClick="OnRowClick" 
+          RowClass="cursor-pointer">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Books</MudText>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString" Placeholder="Search"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                      IconSize="Size.Medium" Class="mt-0" />
+        <MudTextField Value="_searchString"
+                      ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchInternal))"
+                      Placeholder="Search"
+                      Immediate="true"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
     </ToolBarContent>
 
     <HeaderContent>
-        <MudTh>Title</MudTh>
-        <MudTh>Author</MudTh>
-        <MudTh>Availability</MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Title" SortBy="new Func<Book, object>(x => nameof(x.Title))">Title</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Author" SortBy="new Func<Book, object>(x => x.Author)">Author</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="IsAvailable" SortBy="new Func<Book, object>(x => x.IsAvailable)">Availability</MudTableSortLabel></MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
 
@@ -43,23 +55,23 @@
     </RowTemplate>
 
     <PagerContent>
-        <MudTablePager />
+        <MudTablePager PageSizeOptions="PageSizeOptions" />
     </PagerContent>
 
     <NoRecordsContent>
-        <MudText>No books found matching the search criteria.</MudText>
+        <MudText>No books found.</MudText>
     </NoRecordsContent>
 </MudTable>
 
 @code {
-    [Parameter]
-    public List<Book> Books { get; set; } = new();
+    [Parameter, EditorRequired]
+    public Func<TableState, CancellationToken, Task<TableData<Book>>> ServerData { get; set; } = default!;
 
     [Parameter]
     public bool IsLoading { get; set; }
 
     [Parameter]
-    public string SearchString { get; set; } = "";
+    public EventCallback<string> OnSearchChanged { get; set; }
 
     [Parameter]
     public EventCallback<TableRowClickEventArgs<Book>> OnRowClick { get; set; }
@@ -70,22 +82,11 @@
     [Parameter]
     public EventCallback<Book> OnEditBook { get; set; }
 
+    private MudTable<Book>? _table;
+
     private string _searchString = "";
 
-    protected override void OnParametersSet()
-    {
-        _searchString = SearchString;
-        base.OnParametersSet();
-    }
-
-    private bool FilterFunc(Book book)
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        return book.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
-               book.Author.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
-    }
+    private readonly int[] PageSizeOptions = new[] { 5, 10, 20, 50 };
 
     private async Task DeleteBook(Book book)
     {
@@ -95,5 +96,13 @@
     private async Task EditBook(Book book)
     {
         await OnEditBook.InvokeAsync(book);
+    }
+
+    private async Task OnSearchInternal(string value)
+    {
+        _searchString = value;
+
+        if (OnSearchChanged.HasDelegate)
+            await OnSearchChanged.InvokeAsync(value);
     }
 }

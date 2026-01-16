@@ -36,13 +36,13 @@ namespace LibraryApi.Data
 
         private static async Task SeedUsersAsync(LibraryContext context)
         {
-            //if (await context.Users.AnyAsync())
-            //{
-            //    WriteGreen("Users already seeded, skipping...");
-            //    return;
-            //}
+            if (await context.Users.AnyAsync())
+            {
+                WriteGreen("Users already seeded, skipping...");
+                return;
+            }
 
-            //WriteGreen("Seeding users database...");
+            WriteGreen("Seeding users database...");
 
             var users = GenerateSeedUsers();
             await context.Users.AddRangeAsync(users);

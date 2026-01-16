@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using static MudBlazor.CategoryTypes;
 
 namespace LibraryWeb.Pages
 {
@@ -21,6 +22,9 @@ namespace LibraryWeb.Pages
         private bool _isPageLoading = true;
         private bool _isDataLoading = true;
         private List<Book> _books = new();
+
+        private MudTable<Book> _table;
+
         private string _searchString = "";
 
         private Book? _selectedBook;
@@ -40,6 +44,12 @@ namespace LibraryWeb.Pages
         private bool _isAuthorized = false;
         private bool _isAdmin;
 
+        private int _currentOffset = 0;
+        private readonly int _pageSize = 10;
+        private readonly int _totalCount = 0;
+        private int _currentPage = 1;
+        private readonly int _totalPages = 1;
+
         private IReadOnlyList<IBrowserFile>? _coverImage;
         private string _bookCoverUrl = "";
         private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
@@ -55,27 +65,39 @@ namespace LibraryWeb.Pages
             if (_isAuthorized)
             {
                 _isAdmin = await AuthStateService.IsAdmin();
-                await LoadBooks();
             }
 
             AuthStateService.AuthenticationChanged += HandleAuthenticationChanged;
         }
 
-        private async Task LoadBooks()
+        private async Task<TableData<Book>> LoadBooks(TableState state, CancellationToken cancellationToken)
         {
-            var result = await BookService.GetBooksAsync();
+            _isDataLoading = true;
 
-            if (result.IsSuccess)
-            {
-                _books = result.Data ?? new List<Book>();
-            }
-            else
-            {
-                _snackbar.Add(result.ErrorMessage, Severity.Error);
-                _books = new List<Book>();
-            }
+            var offset = state.Page * state.PageSize;
+            var pageSize = state.PageSize;
+
+            string? sortBy = state.SortLabel ?? "Id"; 
+            bool sortDescending = state.SortDirection == SortDirection.Descending;
+
+            var result = await BookService.GetBooksAsync(offset, pageSize, sortBy, sortDescending);
 
             _isDataLoading = false;
+
+            if (!result.IsSuccess || result.Data == null)
+            {
+                return new TableData<Book>
+                {
+                    Items = Array.Empty<Book>(),
+                    TotalItems = 0
+                };
+            }
+
+            return new TableData<Book>
+            {
+                Items = result.Data.Items,
+                TotalItems = result.Data.TotalCount
+            };
         }
 
         private async Task GetBookCover(Book book)
@@ -130,7 +152,7 @@ namespace LibraryWeb.Pages
             {
                 _snackbar.Add("Book ordered successfully", Severity.Success);
                 CloseDialog();
-                await LoadBooks();
+                await ReloadTable();
                 await InvokeAsync(StateHasChanged);
             }
             else
@@ -154,7 +176,7 @@ namespace LibraryWeb.Pages
             if (result.IsSuccess)
             {
                 _snackbar.Add("Book added successfully.", Severity.Success);
-                await LoadBooks();
+                await ReloadTable();
                 _showAddBookDialog = false;
             }
             else
@@ -187,7 +209,7 @@ namespace LibraryWeb.Pages
             if (result.IsSuccess)
             {
                 _snackbar.Add("Book updated successfully.", Severity.Success);
-                await LoadBooks();
+                await ReloadTable();
                 _showEditBookDialog = false;
             }
             else
@@ -212,7 +234,7 @@ namespace LibraryWeb.Pages
             if (result.IsSuccess)
             {
                 _snackbar.Add("Book deleted successfully.", Severity.Success);
-                await LoadBooks();
+                await ReloadTable();
             }
             else
             {
@@ -271,12 +293,19 @@ namespace LibraryWeb.Pages
             if (_isAuthorized)
             {
                 _isAdmin = await AuthStateService.IsAdmin();
-                await LoadBooks();
+                await ReloadTable();
             }
 
             await InvokeAsync(StateHasChanged);
         }
 
+        private async Task ReloadTable()
+        {
+            if (_table != null)
+            {
+                await _table.ReloadServerData();
+            }
+        }
         private async Task ClearAsync()
         {
             await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
@@ -302,5 +331,13 @@ namespace LibraryWeb.Pages
 
         private void ClearDragClass()
             => _dragClass = DefaultDragClass;
+
+        private async Task OnSearchChanged(string search)
+        {
+            _searchString = search;
+            _currentOffset = 0;
+            _currentPage = 1;
+            await ReloadTable();
+        }
     }
 }

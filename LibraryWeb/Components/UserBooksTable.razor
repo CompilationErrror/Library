@@ -1,68 +1,82 @@
 ﻿@using DataModelLibrary.Models
+@using MudBlazor
 
-<MudTable T="Book" Items="@Books" Dense="false" Hover="true" Loading="@IsLoading" 
-          LoadingProgressColor="Color.Info" Elevation="0" 
-          Filter="new Func<Book,bool>(FilterFunc)" OnRowClick="OnRowClick" RowClass="cursor-pointer">
+<MudTable T="Book"
+          @ref="_table"
+          ServerData="ServerData"
+          Hover="true"
+          Dense="false"
+          Loading="IsLoading"
+          LoadingProgressColor="Color.Info"
+          Elevation="0"
+          OnRowClick="OnRowClick"
+          RowClass="cursor-pointer">
+
     <ToolBarContent>
         <MudText Typo="Typo.h6">Books</MudText>
-        <MudSpacer/>
-        <MudTextField @bind-Value="_searchString" Placeholder="Search"
-                     Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                     IconSize="Size.Medium" Class="mt-0" />
+        <MudSpacer />
+
+        <MudTextField Value="_searchString"
+                      ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchChangedInternal))"
+                      Placeholder="Search"
+                      Immediate="true"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
     </ToolBarContent>
-    
+
     <HeaderContent>
         <MudTh>Title</MudTh>
         <MudTh>Author</MudTh>
         <MudTh>Availability</MudTh>
     </HeaderContent>
-    
+
     <RowTemplate>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Author">@context.Author</MudTd>
         <MudTd DataLabel="Availability">
-            <MudText Color="@((bool)context.IsAvailable ? Color.Success : Color.Error)">
-                @((bool)context.IsAvailable ? "Available" : "Not Available")
+            <MudText Color="@(context.IsAvailable? Color.Success: Color.Error)">
+                @(context.IsAvailable ? "Available" : "Not Available")
             </MudText>
         </MudTd>
     </RowTemplate>
 
     <PagerContent>
-        <MudTablePager />
+        <MudTablePager PageSizeOptions="_pageSizeOptions" />
     </PagerContent>
-    
+
     <NoRecordsContent>
-        <MudText>No books found matching the search criteria.</MudText>
+        <MudText>No books found.</MudText>
     </NoRecordsContent>
+
 </MudTable>
 
 @code {
-    [Parameter]
-    public List<Book> Books { get; set; } = new();
-    
+
+    [Parameter, EditorRequired]
+    public Func<TableState, CancellationToken,Task<TableData<Book>>> ServerData { get; set; } = default!;
+
     [Parameter]
     public bool IsLoading { get; set; }
-    
-    [Parameter]
-    public string SearchString { get; set; } = "";
-    
+
     [Parameter]
     public EventCallback<TableRowClickEventArgs<Book>> OnRowClick { get; set; }
-    
-    private string _searchString = "";
-    
-    protected override void OnParametersSet()
-    {
-        _searchString = SearchString;
-        base.OnParametersSet();
-    }
-    
-    private bool FilterFunc(Book book)
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
 
-        return book.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true ||
-               book.Author.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    [Parameter]
+    public EventCallback<string> OnSearchChanged { get; set; }
+
+    private MudTable<Book>? _table;
+    private string _searchString = "";
+    private readonly int[] _pageSizeOptions = { 5, 10, 20, 50 };
+
+    private async Task OnSearchChangedInternal(string value)
+    {
+        _searchString = value;
+
+        if (OnSearchChanged.HasDelegate)
+            await OnSearchChanged.InvokeAsync(value);
+
+        await _table!.ReloadServerData();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using DataModelLibrary.Models;
+using DataModelLibrary.QueryParameters;
 using LibraryApi.Data;
+using LibraryApi.Extensions.ApiQueryExtensions;
 using LibraryApi.Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,9 +16,14 @@ namespace LibraryApi.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<List<Book>> GetBooksAsync()
+        public async Task<List<Book>> GetBooksAsync(BookQueryParameters parameters)
         {
-            return await _context.Books.ToListAsync();
+            return await _context.Books
+                .AsNoTracking()
+                .ApplySorting(parameters.SortBy, parameters.SortDescending)
+                .Skip(parameters.Offset)
+                .Take(parameters.Limit)
+                .ToListAsync();
         }
 
         public async Task<Book> GetBookByIdAsync(int id)
@@ -48,6 +55,11 @@ namespace LibraryApi.Infrastructure.Services
 
             _context.Books.Remove(bookToDelete);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> GetTotalCountAsync()
+        {
+            return await _context.Books.AsNoTracking().CountAsync();
         }
     }
 }

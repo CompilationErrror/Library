@@ -1,8 +1,9 @@
 ﻿using DataModelLibrary.Models;
+using DataModelLibrary.Pagination;
+using DataModelLibrary.QueryParameters;
 using LibraryApi.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace LibraryApi.Controllers
 {
@@ -19,10 +20,16 @@ namespace LibraryApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Book>>> GetBooks()
+        public async Task<ActionResult<List<Book>>> GetBooks([FromQuery] BookQueryParameters parameters)
         {
-            var books = await _bookService.GetBooksAsync();
-            return Ok(books);
+            var books = await _bookService.GetBooksAsync(parameters);
+            var totalCount = await _bookService.GetTotalCountAsync();
+
+            return Ok(new PagedResult<Book>
+            {
+                Items = books,
+                TotalCount = totalCount
+            });
         }
 
         [HttpGet("{id}")]
