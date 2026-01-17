@@ -1,7 +1,7 @@
 ﻿@using DataModelLibrary.Models
 @using MudBlazor
 
-<MudTable T="Book"
+<MudTable T="Book" SortLabel="Sort by"
           @ref="_table"
           ServerData="ServerData"
           Hover="true"
@@ -27,9 +27,9 @@
     </ToolBarContent>
 
     <HeaderContent>
-        <MudTh>Title</MudTh>
-        <MudTh>Author</MudTh>
-        <MudTh>Availability</MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Title" SortBy="new Func<Book, object>(x => nameof(x.Title))">Title</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Author" SortBy="new Func<Book, object>(x => x.Author)">Author</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="IsAvailable" SortBy="new Func<Book, object>(x => x.IsAvailable)">Availability</MudTableSortLabel></MudTh>
     </HeaderContent>
 
     <RowTemplate>
