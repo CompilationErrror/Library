@@ -40,7 +40,7 @@ namespace LibraryApi.Infrastructure.Services
                 User = user
             };
 
-            book.IsAvailable = false;
+            book.QuantityInStock--;
 
             await _context.OrderedBooks.AddAsync(orderedBook);
             await _context.SaveChangesAsync();
@@ -64,7 +64,8 @@ namespace LibraryApi.Infrastructure.Services
             var user = await _context.Users.FirstOrDefaultAsync(c => c.Id == orderedBooksToDelete.First().UserId);
             user.TotalBooksReturned++;
 
-            orderedBooksToDelete.ForEach(ob => ob.Book.IsAvailable = true);
+
+            orderedBooksToDelete.ForEach(ob => ob.Book.QuantityInStock++);
 
             _context.OrderedBooks.RemoveRange(orderedBooksToDelete);
             await _context.SaveChangesAsync();

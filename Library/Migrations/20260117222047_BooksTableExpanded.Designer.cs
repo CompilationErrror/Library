@@ -4,6 +4,7 @@ using LibraryApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibraryApi.Migrations
 {
     [DbContext(typeof(LibraryContext))]
-    partial class LibraryContextModelSnapshot : ModelSnapshot
+    [Migration("20260117222047_BooksTableExpanded")]
+    partial class BooksTableExpanded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,11 +37,8 @@ namespace LibraryApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("GenreId")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
 
                     b.Property<int>("PublishedYear")
                         .HasColumnType("int");
@@ -50,8 +50,6 @@ namespace LibraryApi.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GenreId");
 
                     b.HasIndex(new[] { "Id" }, "IX_Books_Id")
                         .IsUnique();
@@ -77,23 +75,6 @@ namespace LibraryApi.Migrations
                         .IsUnique();
 
                     b.ToTable("CoverImages");
-                });
-
-            modelBuilder.Entity("DataModelLibrary.Models.Genre", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Genres");
                 });
 
             modelBuilder.Entity("DataModelLibrary.Models.OrderedBook", b =>
@@ -162,15 +143,6 @@ namespace LibraryApi.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("DataModelLibrary.Models.Book", b =>
-                {
-                    b.HasOne("DataModelLibrary.Models.Genre", "Genre")
-                        .WithMany("Books")
-                        .HasForeignKey("GenreId");
-
-                    b.Navigation("Genre");
-                });
-
             modelBuilder.Entity("DataModelLibrary.Models.CoverImage", b =>
                 {
                     b.HasOne("DataModelLibrary.Models.Book", "Book")
@@ -203,11 +175,6 @@ namespace LibraryApi.Migrations
                     b.Navigation("Cover");
 
                     b.Navigation("OrderedBook");
-                });
-
-            modelBuilder.Entity("DataModelLibrary.Models.Genre", b =>
-                {
-                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("DataModelLibrary.Models.User", b =>

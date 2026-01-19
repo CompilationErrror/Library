@@ -26,18 +26,12 @@
     <HeaderContent>
         <MudTh><MudTableSortLabel SortLabel="Title" SortBy="new Func<Book, object>(x => nameof(x.Title))">Title</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Author" SortBy="new Func<Book, object>(x => x.Author)">Author</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortLabel="IsAvailable" SortBy="new Func<Book, object>(x => x.IsAvailable)">Availability</MudTableSortLabel></MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
 
     <RowTemplate>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Author">@context.Author</MudTd>
-        <MudTd DataLabel="Availability">
-            <MudText Color="@((bool)context.IsAvailable ? Color.Success : Color.Error)">
-                @((bool)context.IsAvailable ? "Available" : "Not Available")
-            </MudText>
-        </MudTd>
         <MudTd>
             <div class="d-flex">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit"

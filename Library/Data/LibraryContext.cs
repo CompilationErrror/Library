@@ -24,6 +24,8 @@ public partial class LibraryContext : DbContext
 
     public virtual DbSet<CoverImage> CoverImages { get; set; }
 
+    public virtual DbSet<Genre> Genres { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Book>(entity =>

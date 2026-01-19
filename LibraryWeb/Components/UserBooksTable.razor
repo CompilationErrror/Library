@@ -29,17 +29,11 @@
     <HeaderContent>
         <MudTh><MudTableSortLabel SortLabel="Title" SortBy="new Func<Book, object>(x => nameof(x.Title))">Title</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Author" SortBy="new Func<Book, object>(x => x.Author)">Author</MudTableSortLabel></MudTh>
-        <MudTh><MudTableSortLabel SortLabel="IsAvailable" SortBy="new Func<Book, object>(x => x.IsAvailable)">Availability</MudTableSortLabel></MudTh>
     </HeaderContent>
 
     <RowTemplate>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Author">@context.Author</MudTd>
-        <MudTd DataLabel="Availability">
-            <MudText Color="@(context.IsAvailable? Color.Success: Color.Error)">
-                @(context.IsAvailable ? "Available" : "Not Available")
-            </MudText>
-        </MudTd>
     </RowTemplate>
 
     <PagerContent>
