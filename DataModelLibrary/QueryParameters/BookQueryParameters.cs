@@ -12,5 +12,13 @@ namespace DataModelLibrary.QueryParameters
         public int Limit { get; set; } = 10;
         public string? SortBy { get; set; } = "Id"; 
         public bool SortDescending { get; set; } = false;
+
+        public string? Author { get; set; }
+        public int? YearFrom { get; set; }
+        public int? YearTo { get; set; }
+        public int? PriceFrom { get; set; }
+        public int? PriceTo { get; set; }
+        public bool AvailableOnly { get; set; } = false;
+        public List<int?>? GenreIds { get; set; }
     }
 }

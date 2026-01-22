@@ -23,7 +23,7 @@ namespace LibraryApi.Controllers
         public async Task<ActionResult<List<Book>>> GetBooks([FromQuery] BookQueryParameters parameters)
         {
             var books = await _bookService.GetBooksAsync(parameters);
-            var totalCount = await _bookService.GetTotalCountAsync();
+            var totalCount = await _bookService.GetTotalCountAsync(parameters);
 
             return Ok(new PagedResult<Book>
             {

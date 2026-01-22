@@ -18,9 +18,13 @@ namespace LibraryApi.Infrastructure.Services
 
         public async Task<List<Book>> GetBooksAsync(BookQueryParameters parameters)
         {
-            return await _context.Books
-                .AsNoTracking()
-                .ApplySorting(parameters.SortBy, parameters.SortDescending)
+            var query = _context.Books.AsNoTracking();
+
+            query = query.ApplyFiltering(parameters);
+
+            query = query.ApplySorting(parameters.SortBy, parameters.SortDescending);
+
+            return await query
                 .Skip(parameters.Offset)
                 .Take(parameters.Limit)
                 .ToListAsync();
@@ -57,9 +61,13 @@ namespace LibraryApi.Infrastructure.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<int> GetTotalCountAsync()
+        public async Task<int> GetTotalCountAsync(BookQueryParameters parameters)
         {
-            return await _context.Books.AsNoTracking().CountAsync();
+            var query = _context.Books.AsNoTracking();
+
+            query = query.ApplyFiltering(parameters);
+
+            return await query.CountAsync();
         }
     }
 }

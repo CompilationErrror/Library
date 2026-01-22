@@ -10,6 +10,6 @@ namespace LibraryApi.Infrastructure.Interfaces
         Task AddBookAsync(Book book);
         Task UpdateBookAsync(Book book);
         Task DeleteBookAsync(int id);
-        Task<int>GetTotalCountAsync();
+        Task<int>GetTotalCountAsync(BookQueryParameters parameters);
     }
 }

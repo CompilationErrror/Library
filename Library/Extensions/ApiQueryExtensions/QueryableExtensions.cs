@@ -1,14 +1,15 @@
-﻿using System.Linq.Expressions;
+﻿using DataModelLibrary.Models;
+using DataModelLibrary.QueryParameters;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace LibraryApi.Extensions.ApiQueryExtensions
 {
     public static class QueryableExtensions
     {
-        public static IQueryable<T> ApplySorting<T>(
-            this IQueryable<T> query,
-            string? sortBy,
-            bool descending)
+        public static IQueryable<T> ApplySorting<T>(this IQueryable<T> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrWhiteSpace(sortBy))
                 return query;
@@ -33,5 +34,47 @@ namespace LibraryApi.Extensions.ApiQueryExtensions
 
             return query.Provider.CreateQuery<T>(resultExpression);
         }
+
+        public static IQueryable<Book> ApplyFiltering(this IQueryable<Book> query, BookQueryParameters parameters)
+        {
+            if (parameters.AvailableOnly)
+            {
+                query = query.Where(b => b.QuantityInStock > 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.Author))
+            {
+                query = query.Where(b => b.Author.Contains(parameters.Author));
+            }
+
+            if (parameters.YearFrom.HasValue)
+            {
+                query = query.Where(b => b.PublishedYear >= parameters.YearFrom.Value);
+            }
+
+            if (parameters.YearTo.HasValue)
+            {
+                query = query.Where(b => b.PublishedYear <= parameters.YearTo.Value);
+            }
+
+            if (parameters.PriceFrom.HasValue)
+            {
+                query = query.Where(b => b.PublishedYear >= parameters.PriceFrom.Value);
+            }
+
+            if (parameters.PriceTo.HasValue)
+            {
+                query = query.Where(b => b.PublishedYear <= parameters.PriceTo.Value);
+            }
+
+            if (parameters.GenreIds != null && parameters.GenreIds.Any())
+            {
+                query = query.Where(book =>
+                    parameters.GenreIds.Contains(book.GenreId));
+            }
+
+            return query;
+        }
+
     }
 }
