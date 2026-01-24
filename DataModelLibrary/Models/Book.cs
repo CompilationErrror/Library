@@ -23,7 +23,6 @@ namespace DataModelLibrary.Models
         [JsonIgnore]
         public virtual CoverImage? Cover { get; set; }
 
-        [JsonIgnore]
         public virtual Genre? Genre { get; set; }
     }
 }

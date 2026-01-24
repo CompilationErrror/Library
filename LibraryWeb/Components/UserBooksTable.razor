@@ -16,6 +16,8 @@
         <MudText Typo="Typo.h6">Books</MudText>
         <MudSpacer />
 
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2" />
+
         <MudTextField Value="_searchString"
                       ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchChangedInternal))"
                       Placeholder="Search"
@@ -29,11 +31,19 @@
     <HeaderContent>
         <MudTh><MudTableSortLabel SortLabel="Title" SortBy="new Func<Book, object>(x => nameof(x.Title))">Title</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="Author" SortBy="new Func<Book, object>(x => x.Author)">Author</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="PublishedYear" SortBy="new Func<Book, object>(x => nameof(x.PublishedYear))">Published</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Genre" SortBy="new Func<Book, object>(x => x.Genre.Name)">Genre</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Price" SortBy="new Func<Book, object>(x => nameof(x.Price))">Price</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="QuantityInStock" SortBy="new Func<Book, object>(x => x.QuantityInStock)">Quantity</MudTableSortLabel></MudTh>
     </HeaderContent>
 
     <RowTemplate>
         <MudTd DataLabel="Title">@context.Title</MudTd>
         <MudTd DataLabel="Author">@context.Author</MudTd>
+        <MudTd DataLabel="Published">@context.PublishedYear</MudTd>
+        <MudTd DataLabel="Genre">@context.Genre.Name</MudTd>
+        <MudTd DataLabel="Price">@context.Price</MudTd>
+        <MudTd DataLabel="Quantity">@context.QuantityInStock</MudTd>
     </RowTemplate>
 
     <PagerContent>

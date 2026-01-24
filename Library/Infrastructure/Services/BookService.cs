@@ -27,12 +27,14 @@ namespace LibraryApi.Infrastructure.Services
             return await query
                 .Skip(parameters.Offset)
                 .Take(parameters.Limit)
+                .Include(b => b.Genre)
                 .ToListAsync();
         }
 
         public async Task<Book> GetBookByIdAsync(int id)
         {
-            var book =  await _context.Books.Include(x => x.Cover)
+            var book =  await _context.Books.Include(b => b.Cover)
+                .Include(b => b.Genre)
                 .FirstOrDefaultAsync(b => b.Id == id);
             return book;
         }

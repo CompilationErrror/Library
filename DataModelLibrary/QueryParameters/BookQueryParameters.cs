@@ -10,9 +10,12 @@ namespace DataModelLibrary.QueryParameters
     {
         public int Offset { get; set; } = 0;
         public int Limit { get; set; } = 10;
+
+        //Sort Parameters
         public string? SortBy { get; set; } = "Id"; 
         public bool SortDescending { get; set; } = false;
 
+        //Filter parametrers
         public string? Author { get; set; }
         public int? YearFrom { get; set; }
         public int? YearTo { get; set; }
