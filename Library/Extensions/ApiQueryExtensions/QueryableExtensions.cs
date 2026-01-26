@@ -59,12 +59,12 @@ namespace LibraryApi.Extensions.ApiQueryExtensions
 
             if (parameters.PriceFrom.HasValue)
             {
-                query = query.Where(b => b.PublishedYear >= parameters.PriceFrom.Value);
+                query = query.Where(b => b.Price >= parameters.PriceFrom.Value);
             }
 
             if (parameters.PriceTo.HasValue)
             {
-                query = query.Where(b => b.PublishedYear <= parameters.PriceTo.Value);
+                query = query.Where(b => b.Price <= parameters.PriceTo.Value);
             }
 
             if (parameters.GenreIds != null && parameters.GenreIds.Any())

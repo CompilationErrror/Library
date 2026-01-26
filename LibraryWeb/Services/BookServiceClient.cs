@@ -1,5 +1,6 @@
 ﻿using DataModelLibrary.Models;
 using DataModelLibrary.Pagination;
+using DataModelLibrary.QueryParameters;
 using LibraryWeb.Services.Base;
 using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Forms;
@@ -10,24 +11,50 @@ namespace LibraryWeb.Services
     {
         public BookServiceClient(HttpClient httpClient) : base(httpClient) { }
 
-        public Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(int offset = 0, int limit = 10, string? sortBy = null, bool sortDescending = false)
+        public Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(BookQueryParameters parameters)
         {
             var queryParams = new List<string>
             {
-                $"offset={offset}",
-                $"limit={limit}"
+                $"offset={parameters.Offset}",
+                $"limit={parameters.Limit}",
+                $"sortDescending={parameters.SortDescending}"
             };
 
-            if (!string.IsNullOrWhiteSpace(sortBy))
+            if (!string.IsNullOrWhiteSpace(parameters.SortBy))
+                queryParams.Add($"sortBy={parameters.SortBy}");
+
+            //Filters
+            if (!string.IsNullOrWhiteSpace(parameters.Author))
+                queryParams.Add($"author={Uri.EscapeDataString(parameters.Author)}");
+
+            if (parameters.YearFrom.HasValue)
+                queryParams.Add($"yearFrom={parameters.YearFrom}");
+
+            if (parameters.YearTo.HasValue)
+                queryParams.Add($"yearTo={parameters.YearTo}");
+
+            if (parameters.PriceFrom.HasValue)
+                queryParams.Add($"priceFrom={parameters.PriceFrom}");
+
+            if (parameters.PriceTo.HasValue)
+                queryParams.Add($"priceTo={parameters.PriceTo}");
+
+            if (parameters.AvailableOnly)
+                queryParams.Add($"availableOnly=true");
+
+            if (parameters.GenreIds is { Count: > 0 })
             {
-                queryParams.Add($"sortBy={sortBy}");
+                foreach (var genreId in parameters.GenreIds.Where(x => x.HasValue))
+                {
+                    queryParams.Add($"genreIds={genreId}");
+                }
             }
 
-            queryParams.Add($"sortDescending={sortDescending}");
-
             var queryString = string.Join("&", queryParams);
+
             return GetAsync<PagedResult<Book>>($"api/Book?{queryString}");
         }
+
 
         public Task<ApiResponse<Book>> GetBookByIdAsync(int bookId)
             => GetAsync<Book>($"api/Book/{bookId}");

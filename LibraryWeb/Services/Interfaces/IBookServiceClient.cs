@@ -1,12 +1,13 @@
 ﻿using DataModelLibrary.Models;
 using DataModelLibrary.Pagination;
+using DataModelLibrary.QueryParameters;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace LibraryWeb.Services.Interfaces
 {
     public interface IBookServiceClient
     {
-        Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(int offset = 0, int limit = 10, string? sortBy = null, bool sortDescending = false);
+        Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(BookQueryParameters parameters);
         Task<ApiResponse<string>> GetBookCoverAsync(int bookId);
         Task<ApiResponse<string>> UploadBookCoverAsync(int bookId, IBrowserFile file);
         Task<ApiResponse<bool>> DeleteBookCoverAsync(int bookId);

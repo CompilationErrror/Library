@@ -1,4 +1,5 @@
-﻿@using DataModelLibrary.Models
+﻿@using DataModelLibrary.FilterModels
+@using DataModelLibrary.Models
 
 <MudTable T="Book" SortLabel="Sort by" 
           @ref="_table"
@@ -10,11 +11,16 @@
           Elevation="0"
           OnRowClick="OnRowClick" 
           RowClass="cursor-pointer">
+
     <ToolBarContent>
         <MudText Typo="Typo.h6">Books</MudText>
         <MudSpacer />
 
-        <MudIconButton Icon="@Icons.Material.Filled.FilterList" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2"/>
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" 
+                      Variant="Variant.Outlined" 
+                      Color="Color.Primary" 
+                      Class="mr-2"
+                      OnClick="OpenFilterDialog" />
 
         <MudTextField Value="_searchString"
                       ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchInternal))"
@@ -68,6 +74,51 @@
     </NoRecordsContent>
 </MudTable>
 
+<MudDialog @bind-Visible="_showFilterDialog" MaxWidth="MaxWidth.Small" FullWidth>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Filters</MudText>
+
+            <MudTextField Label="Author"
+                          @bind-Value="_localFilter.Author"
+                          Clearable />
+
+            <MudNumericField T="int?" Label="Year from"
+                             @bind-Value="_localFilter.YearFrom" />
+
+            <MudNumericField T="int?" Label="Year to"
+                             @bind-Value="_localFilter.YearTo" />
+
+            <MudNumericField T="int?" Label="Price from"
+                             @bind-Value="_localFilter.PriceFrom" />
+
+            <MudNumericField T="int?" Label="Price to"
+                             @bind-Value="_localFilter.PriceTo" />
+            <div class="d-flex justify-space-between align-center">
+                <MudText>Available only</MudText>
+                <MudSwitch @bind-Value="_localFilter.AvailableOnly" Color="Color.Primary" />      
+            </div>
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   OnClick="ClearFilters">
+            Clear
+        </MudButton>
+
+        <MudSpacer />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="ApplyFilters">
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
 @code {
     [Parameter, EditorRequired]
     public Func<TableState, CancellationToken, Task<TableData<Book>>> ServerData { get; set; } = default!;
@@ -87,11 +138,18 @@
     [Parameter]
     public EventCallback<Book> OnEditBook { get; set; }
 
+    [Parameter] public BookFilter Filter { get; set; } = new();
+
+    [Parameter] public EventCallback<BookFilter> OnFilterChanged { get; set; }
+
     private MudTable<Book>? _table;
 
     private string _searchString = "";
 
     private readonly int[] PageSizeOptions = new[] { 5, 10, 20, 50 };
+
+    private bool _showFilterDialog;
+    private BookFilter _localFilter = new();
 
     private async Task DeleteBook(Book book)
     {
@@ -109,5 +167,43 @@
 
         if (OnSearchChanged.HasDelegate)
             await OnSearchChanged.InvokeAsync(value);
+    }
+
+    private void OpenFilterDialog()
+    {
+        _localFilter = new BookFilter
+        {
+            Author = Filter.Author,
+            YearFrom = Filter.YearFrom,
+            YearTo = Filter.YearTo,
+            PriceFrom = Filter.PriceFrom,
+            PriceTo = Filter.PriceTo,
+            AvailableOnly = Filter.AvailableOnly
+        };
+
+        _showFilterDialog = true;
+    }
+
+    private async Task ApplyFilters()
+    {
+        _showFilterDialog = false;
+        await OnFilterChanged.InvokeAsync(_localFilter);
+
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        _localFilter = new BookFilter();
+        _showFilterDialog = false;
+        await OnFilterChanged.InvokeAsync(_localFilter);
+
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
     }
 }

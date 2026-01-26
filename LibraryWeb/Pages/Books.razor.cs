@@ -1,4 +1,6 @@
-﻿using DataModelLibrary.Models;
+﻿using DataModelLibrary.FilterModels;
+using DataModelLibrary.Models;
+using DataModelLibrary.QueryParameters;
 using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -50,6 +52,8 @@ namespace LibraryWeb.Pages
         private int _currentPage = 1;
         private readonly int _totalPages = 1;
 
+        private BookFilter _filter = new();
+
         private IReadOnlyList<IBrowserFile>? _coverImage;
         private string _bookCoverUrl = "";
         private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
@@ -77,10 +81,25 @@ namespace LibraryWeb.Pages
             var offset = state.Page * state.PageSize;
             var pageSize = state.PageSize;
 
-            string? sortBy = state.SortLabel ?? "Id"; 
+            string? sortBy = state.SortLabel ?? "Id";
             bool sortDescending = state.SortDirection == SortDirection.Descending;
 
-            var result = await BookService.GetBooksAsync(offset, pageSize, sortBy, sortDescending);
+            var parameters = new BookQueryParameters
+            {
+                Offset = offset,
+                Limit = pageSize,
+                SortBy = sortBy,
+                SortDescending = sortDescending,
+
+                Author = _filter.Author,
+                YearFrom = _filter.YearFrom,
+                YearTo = _filter.YearTo,
+                PriceFrom = _filter.PriceFrom,
+                PriceTo = _filter.PriceTo,
+                AvailableOnly = _filter.AvailableOnly
+            };
+
+            var result = await BookService.GetBooksAsync(parameters);
 
             _isDataLoading = false;
 
@@ -251,10 +270,15 @@ namespace LibraryWeb.Pages
             _bookToDelete = null;
         }
 
-        private async void OnRowClick(TableRowClickEventArgs<Book> books)
+        private async void OnTableRowClick(TableRowClickEventArgs<Book> books)
         {
             await GetBookCover(books.Item);
             StateHasChanged();
+        }
+        private async Task OnFilterChanged(BookFilter filter)
+        {
+            _filter = filter;
+            await InvokeAsync(StateHasChanged);
         }
 
         private void OpenAddBookDialog()

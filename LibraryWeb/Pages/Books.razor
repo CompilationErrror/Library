@@ -21,18 +21,21 @@ else if (!_isAuthorized)
 }
 else
 {
-    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4"> Table
         <MudText Typo="Typo.h3" Class="mb-4">Books Collection</MudText>
 
         <MudPaper Class="pa-4">
             @if (_isAdmin)
             {
                 <AdminBooksTable ServerData="LoadBooks"
-                                 IsLoading="_isDataLoading"
-                                 OnRowClick="OnRowClick"
-                                 OnDeleteBook="DeleteBookClick"
-                                 OnEditBook="EditBookClick" 
-                                 OnSearchChanged="OnSearchChanged"/>
+                            IsLoading="_isDataLoading"
+                            OnRowClick="OnTableRowClick"
+                            OnDeleteBook="DeleteBookClick"
+                            OnEditBook="EditBookClick"
+                            OnSearchChanged="OnSearchChanged"
+                            Filter="_filter"
+                            OnFilterChanged="OnFilterChanged" />
+                                 
 
                 <MudButton OnClick="OpenAddBookDialog" 
                 Variant="Variant.Filled" 
@@ -44,8 +47,8 @@ else
             {
                 <UserBooksTable ServerData="LoadBooks"
                                 IsLoading="_isDataLoading"
-                                OnRowClick="OnRowClick"
-                                OnSearchChanged="OnSearchChanged" />
+                                OnRowClick="OnTableRowClick"
+                                OnSearchChanged="OnSearchChanged"/>
             }
         </MudPaper>
     </MudContainer>
