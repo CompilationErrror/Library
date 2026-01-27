@@ -25,31 +25,26 @@ else
         <MudText Typo="Typo.h3" Class="mb-4">Books Collection</MudText>
 
         <MudPaper Class="pa-4">
+
+            <BooksTable ServerData="LoadBooks"
+                        IsAdmin="_isAdmin"
+                        IsLoading="_isDataLoading"
+                        Filter="_filter"
+                        OnSearchChanged="OnSearchChanged"
+                        OnRowClick="OnTableRowClick"
+                        OnEditBook="EditBookClick"
+                        OnDeleteBook="DeleteBookClick"
+                        OnOrderBook="OrderBook"
+                        OnFilterChanged="OnFilterChanged" />
+                                 
             @if (_isAdmin)
             {
-                <AdminBooksTable ServerData="LoadBooks"
-                            IsLoading="_isDataLoading"
-                            OnRowClick="OnTableRowClick"
-                            OnDeleteBook="DeleteBookClick"
-                            OnEditBook="EditBookClick"
-                            OnSearchChanged="OnSearchChanged"
-                            Filter="_filter"
-                            OnFilterChanged="OnFilterChanged" />
-                                 
-
                 <MudButton OnClick="OpenAddBookDialog" 
                 Variant="Variant.Filled" 
                 Color="MudBlazor.Color.Primary" 
                 StartIcon="@Icons.Material.Filled.Add">Add new book</MudButton>
+            }
 
-            }
-            else
-            {
-                <UserBooksTable ServerData="LoadBooks"
-                                IsLoading="_isDataLoading"
-                                OnRowClick="OnTableRowClick"
-                                OnSearchChanged="OnSearchChanged"/>
-            }
         </MudPaper>
     </MudContainer>
 }
@@ -66,10 +61,7 @@ else
                 @if (!string.IsNullOrEmpty(_bookCoverUrl))
                 {
                     <MudImage Src="@_bookCoverUrl" Alt="Book Cover" Style="max-width: 300px;" ObjectFit="ObjectFit.Cover" />
-                    @if (_selectedBook.QuantityInStock > 0 && !_isAdmin)
-                    {
-                        <MudButton OnClick="OrderBook" Class="mt-2" FullWidth="true" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.ShoppingBasket">Order book</MudButton>
-                    }
+
                     if(_isAdmin)
                     {
                         <MudButton OnClick="DeleteCover" Class="mt-2" FullWidth="true" Variant="Variant.Filled" Color="MudBlazor.Color.Error" StartIcon="@Icons.Material.Filled.Delete">Delete cover</MudButton>

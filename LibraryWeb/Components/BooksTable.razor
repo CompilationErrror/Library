@@ -1,0 +1,164 @@
+﻿@using DataModelLibrary.FilterModels
+@using DataModelLibrary.Models
+
+<MudTable T="Book"
+          SortLabel="Sort by"
+          @ref="_table"
+          ServerData="ServerData"
+          Dense="false"
+          Hover="true"
+          Loading="@IsLoading"
+          LoadingProgressColor="Color.Info"
+          Elevation="0"
+          OnRowClick="OnRowClick"
+          RowClass="cursor-pointer">
+
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Books</MudText>
+        <MudSpacer />
+
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Class="mr-2"
+                       OnClick="OpenFilterDialog" />
+
+        <MudTextField Value="_searchString"
+                      ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchInternal))"
+                      Placeholder="Search"
+                      Immediate="true"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+    </ToolBarContent>
+
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel SortLabel="Title"
+                               SortBy="new Func<Book, object>(x => nameof(x.Title))">
+                Title
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>
+            <MudTableSortLabel SortLabel="Author"
+                               SortBy="new Func<Book, object>(x => x.Author)">
+                Author
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>
+            <MudTableSortLabel SortLabel="PublishedYear"
+                               SortBy="new Func<Book, object>(x => nameof(x.PublishedYear))">
+                Published
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>
+            <MudTableSortLabel SortLabel="Genre"
+                               SortBy="new Func<Book, object>(x => x.Genre.Name)">
+                Genre
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>
+            <MudTableSortLabel SortLabel="Price"
+                               SortBy="new Func<Book, object>(x => nameof(x.Price))">
+                Price
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>
+            <MudTableSortLabel SortLabel="QuantityInStock"
+                               SortBy="new Func<Book, object>(x => x.QuantityInStock)">
+                Quantity
+            </MudTableSortLabel>
+        </MudTh>
+
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Author">@context.Author</MudTd>
+        <MudTd DataLabel="Published">@context.PublishedYear</MudTd>
+        <MudTd DataLabel="Genre">@context.Genre.Name</MudTd>
+        <MudTd DataLabel="Price">@context.Price</MudTd>
+        <MudTd DataLabel="Quantity">@context.QuantityInStock</MudTd>
+
+        <MudTd>
+            <div class="d-flex">
+                @if (IsAdmin)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => EditBook(context))"
+                                   Class="rounded-circle mr-2" />
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => DeleteBook(context))"
+                                   Class="rounded-circle" />
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OrderBook(context))"
+                                   Class="rounded-circle" />
+                }
+            </div>
+        </MudTd>
+    </RowTemplate>
+
+    <PagerContent>
+        <MudTablePager PageSizeOptions="PageSizeOptions" />
+    </PagerContent>
+
+    <NoRecordsContent>
+        <MudText>No books found.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+<MudDialog @bind-Visible="_showFilterDialog">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Filters</MudText>
+
+            <MudTextField Label="Author"
+                          @bind-Value="_localFilter.Author"
+                          Clearable />
+
+            <MudNumericField T="int?" Label="Year from"
+                             @bind-Value="_localFilter.YearFrom" />
+
+            <MudNumericField T="int?" Label="Year to"
+                             @bind-Value="_localFilter.YearTo" />
+
+            <MudNumericField T="int?" Label="Price from"
+                             @bind-Value="_localFilter.PriceFrom" />
+
+            <MudNumericField T="int?" Label="Price to"
+                             @bind-Value="_localFilter.PriceTo" />
+
+            <div class="d-flex justify-space-between align-center">
+                <MudText>Available only</MudText>
+                <MudSwitch @bind-Value="_localFilter.AvailableOnly"
+                           Color="Color.Primary" />
+            </div>
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ClearFilters">Clear</MudButton>
+
+        <MudSpacer />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilters"> Apply</MudButton>
+    </DialogActions>
+</MudDialog>
+

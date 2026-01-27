@@ -102,6 +102,7 @@ namespace LibraryWeb.Pages
             var result = await BookService.GetBooksAsync(parameters);
 
             _isDataLoading = false;
+            StateHasChanged();
 
             if (!result.IsSuccess || result.Data == null)
             {
