@@ -9,7 +9,7 @@ namespace DataModelLibrary.Models
 
         public string Author { get; set; } = string.Empty;
 
-        public int PublishedYear { get; set; }
+        public int PublishedYear { get; set; } = 0;
 
         public int QuantityInStock { get; set; }
 

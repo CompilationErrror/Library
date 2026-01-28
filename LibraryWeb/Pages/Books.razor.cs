@@ -1,12 +1,11 @@
 ﻿using DataModelLibrary.FilterModels;
 using DataModelLibrary.Models;
 using DataModelLibrary.QueryParameters;
+using LibraryWeb.Components;
 using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
-using static MudBlazor.CategoryTypes;
 
 namespace LibraryWeb.Pages
 {
@@ -25,7 +24,7 @@ namespace LibraryWeb.Pages
         private bool _isDataLoading = true;
         private List<Book> _books = new();
 
-        private MudTable<Book> _table;
+        private BooksTable _booksTable;
 
         private string _searchString = "";
 
@@ -164,14 +163,13 @@ namespace LibraryWeb.Pages
             }
         }
 
-        private async Task OrderBook()
+        private async Task OrderBook(Book book)
         {
-            var result = await BookService.OrderBookAsync(_selectedBook.Id);
+            var result = await BookService.OrderBookAsync(book.Id);
 
             if (result.IsSuccess)
             {
                 _snackbar.Add("Book ordered successfully", Severity.Success);
-                CloseDialog();
                 await ReloadTable();
                 await InvokeAsync(StateHasChanged);
             }
@@ -183,12 +181,6 @@ namespace LibraryWeb.Pages
 
         private async Task AddNewBook()
         {
-            if (string.IsNullOrWhiteSpace(_newBook.Title) || string.IsNullOrWhiteSpace(_newBook.Author))
-            {
-                _snackbar.Add("Title and Author are required.", Severity.Warning);
-                return;
-            }
-
             _isAddingBook = true;
 
             var result = await BookService.AddBookAsync(_newBook);
@@ -214,14 +206,8 @@ namespace LibraryWeb.Pages
             StateHasChanged();
         }
 
-        private async Task UpdateBook()
+        private async Task EditBook()
         {
-            if (string.IsNullOrWhiteSpace(_bookToEdit.Title) || string.IsNullOrWhiteSpace(_bookToEdit.Author))
-            {
-                _snackbar.Add("Title and Author are required.", Severity.Warning);
-                return;
-            }
-
             _isEditingBook = true;
 
             var result = await BookService.UpdateBookAsync(_bookToEdit);
@@ -326,9 +312,9 @@ namespace LibraryWeb.Pages
 
         private async Task ReloadTable()
         {
-            if (_table != null)
+            if (_booksTable != null)
             {
-                await _table.ReloadServerData();
+                await _booksTable.ReloadTableData();
             }
         }
         private async Task ClearAsync()

@@ -27,6 +27,7 @@ else
         <MudPaper Class="pa-4">
 
             <BooksTable ServerData="LoadBooks"
+                        @ref="_booksTable"
                         IsAdmin="_isAdmin"
                         IsLoading="_isDataLoading"
                         Filter="_filter"
@@ -152,6 +153,29 @@ else
                           RequiredError="Author is required!" 
                           Immediate="true" 
                           Class="mt-4"/>
+
+            <MudTextField @bind-Value="_newBook.PublishedYear"
+                          Label="Release year"
+                          Required="false"
+                          RequiredError="Year is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            <MudTextField @bind-Value="_newBook.QuantityInStock"
+                          Label="Quantity in stock"
+                          Required="true"
+                          RequiredError="Quantity is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            <MudTextField @bind-Value="_newBook.Price"
+                          Label="Price"
+                          Required="true"
+                          RequiredError="Price is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            @* Dropdown with list of genres should be here *@
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -187,12 +211,35 @@ else
                           RequiredError="Author is required!" 
                           Immediate="true" 
                           Class="mt-4"/>
+
+            <MudTextField @bind-Value="_newBook.PublishedYear"
+                          Label="Release year"
+                          Required="false"
+                          RequiredError="Year is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            <MudTextField @bind-Value="_newBook.QuantityInStock"
+                          Label="Quantity in stock"
+                          Required="true"
+                          RequiredError="Quantity is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            <MudTextField @bind-Value="_newBook.Price"
+                          Label="Price"
+                          Required="true"
+                          RequiredError="Price is required!"
+                          Immediate="true"
+                          Class="mt-4" />
+
+            @* Dropdown with list of genres should be here *@
         </MudForm>
     </DialogContent>
     <DialogActions>
         <MudButton Color="Color.Secondary" OnClick="CloseEditBookDialog">Cancel</MudButton>
         <MudButton Color="Color.Primary" 
-                   OnClick="UpdateBook" 
+                   OnClick="EditBook" 
                    Disabled="_isEditingBook">
             @if (_isEditingBook)
             {

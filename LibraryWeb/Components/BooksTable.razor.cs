@@ -76,8 +76,7 @@ namespace LibraryWeb.Components
 
             await OnFilterChanged.InvokeAsync(_localFilter);
 
-            if (_table != null)
-                await _table.ReloadServerData();
+            await ReloadTableData();
         }
 
         private async Task ClearFilters()
@@ -87,8 +86,15 @@ namespace LibraryWeb.Components
 
             await OnFilterChanged.InvokeAsync(_localFilter);
 
+            await ReloadTableData();
+        }
+
+        public async Task ReloadTableData()
+        {
             if (_table != null)
+            {
                 await _table.ReloadServerData();
+            }
         }
     }
 
