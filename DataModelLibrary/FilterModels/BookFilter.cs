@@ -9,5 +9,6 @@ namespace DataModelLibrary.FilterModels
         public int? PriceFrom { get; set; }
         public int? PriceTo { get; set; }
         public bool AvailableOnly { get; set; }
+        public List<int>? GenreIds { get; set; }
     }
 }

@@ -33,10 +33,17 @@ namespace LibraryApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<Book>>> GetBookById([FromRoute]int id)
+        public async Task<ActionResult<List<Book>>> GetBookById([FromRoute] int id)
         {
             var book = await _bookService.GetBookByIdAsync(id);
             return Ok(book);
+        }
+
+        [HttpGet("genres")]
+        public async Task<ActionResult<List<Genre>>> GetGenres()
+        {
+            var genres = await _bookService.GetGenresAsync();
+            return Ok(genres);
         }
 
         [HttpPost]

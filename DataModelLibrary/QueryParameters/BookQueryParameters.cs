@@ -19,9 +19,9 @@ namespace DataModelLibrary.QueryParameters
         public string? Author { get; set; }
         public int? YearFrom { get; set; }
         public int? YearTo { get; set; }
-        public int? PriceFrom { get; set; }
-        public int? PriceTo { get; set; }
+        public double? PriceFrom { get; set; }
+        public double? PriceTo { get; set; }
         public bool AvailableOnly { get; set; } = false;
-        public List<int?>? GenreIds { get; set; }
+        public List<int>? GenreIds { get; set; }
     }
 }

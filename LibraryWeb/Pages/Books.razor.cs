@@ -22,9 +22,9 @@ namespace LibraryWeb.Pages
 
         private bool _isPageLoading = true;
         private bool _isDataLoading = true;
-        private List<Book> _books = new();
 
         private BooksTable _booksTable;
+        private List<Genre> _availableGenres = new();
 
         private string _searchString = "";
 
@@ -50,11 +50,11 @@ namespace LibraryWeb.Pages
         private readonly int _totalCount = 0;
         private int _currentPage = 1;
         private readonly int _totalPages = 1;
-
         private BookFilter _filter = new();
 
         private IReadOnlyList<IBrowserFile>? _coverImage;
         private string _bookCoverUrl = "";
+
         private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
         private readonly List<string> _fileNames = new();
         private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
@@ -68,6 +68,7 @@ namespace LibraryWeb.Pages
             if (_isAuthorized)
             {
                 _isAdmin = await AuthStateService.IsAdmin();
+                await LoadGenres();
             }
 
             AuthStateService.AuthenticationChanged += HandleAuthenticationChanged;
@@ -95,7 +96,8 @@ namespace LibraryWeb.Pages
                 YearTo = _filter.YearTo,
                 PriceFrom = _filter.PriceFrom,
                 PriceTo = _filter.PriceTo,
-                AvailableOnly = _filter.AvailableOnly
+                AvailableOnly = _filter.AvailableOnly,
+                GenreIds = _filter.GenreIds
             };
 
             var result = await BookService.GetBooksAsync(parameters);
@@ -119,6 +121,15 @@ namespace LibraryWeb.Pages
             };
         }
 
+        private async Task LoadGenres()
+        {
+            var result = await BookService.GetGenresAsync();
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                _availableGenres = result.Data;  
+            }
+        }
         private async Task GetBookCover(Book book)
         {
             var result = await BookService.GetBookCoverAsync(book.Id);

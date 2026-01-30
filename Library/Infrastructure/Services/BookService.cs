@@ -39,6 +39,14 @@ namespace LibraryApi.Infrastructure.Services
             return book;
         }
 
+        public async Task<List<Genre>> GetGenresAsync()
+        {
+            var genres = await _context.Genres.AsNoTracking()
+                .ToListAsync();
+
+            return genres;
+        }
+
         public async Task AddBookAsync(Book book)
         {
             await _context.Books.AddAsync(book);

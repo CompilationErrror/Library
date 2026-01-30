@@ -8,6 +8,7 @@ namespace LibraryWeb.Services.Interfaces
     public interface IBookServiceClient
     {
         Task<ApiResponse<PagedResult<Book>>> GetBooksAsync(BookQueryParameters parameters);
+        Task<ApiResponse<List<Genre>>> GetGenresAsync();
         Task<ApiResponse<string>> GetBookCoverAsync(int bookId);
         Task<ApiResponse<string>> UploadBookCoverAsync(int bookId, IBrowserFile file);
         Task<ApiResponse<bool>> DeleteBookCoverAsync(int bookId);

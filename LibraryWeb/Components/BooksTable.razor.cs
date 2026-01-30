@@ -1,5 +1,6 @@
 ﻿using DataModelLibrary.FilterModels;
 using DataModelLibrary.Models;
+using LibraryWeb.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -7,26 +8,23 @@ namespace LibraryWeb.Components
 {
     public partial class BooksTable
     {
-        [Parameter, EditorRequired]
+        [Inject] private IBookServiceClient BookService { get; set; } = default!;
+
+        [Parameter, EditorRequired] 
         public Func<TableState, CancellationToken, Task<TableData<Book>>> ServerData { get; set; } = default!;
-
         [Parameter] public bool IsAdmin { get; set; }
-
         [Parameter] public bool IsLoading { get; set; }
-
         [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
-
         [Parameter] public EventCallback<TableRowClickEventArgs<Book>> OnRowClick { get; set; }
-
         [Parameter] public EventCallback<Book> OnDeleteBook { get; set; }
-
         [Parameter] public EventCallback<Book> OnEditBook { get; set; }
-
         [Parameter] public EventCallback<Book> OnOrderBook { get; set; }
-
-        [Parameter] public BookFilter Filter { get; set; } = new();
-
         [Parameter] public EventCallback<BookFilter> OnFilterChanged { get; set; }
+        [Parameter] public BookFilter Filter { get; set; } = new();
+        [Parameter] public List<Genre> AvailableGenres { get; set; } = new();
+
+        private int GenreId { get; set; }
+        private IEnumerable<int> selectedGenres { get; set; } = new List<int>();
 
         private MudTable<Book>? _table;
 
@@ -64,7 +62,8 @@ namespace LibraryWeb.Components
                 YearTo = Filter.YearTo,
                 PriceFrom = Filter.PriceFrom,
                 PriceTo = Filter.PriceTo,
-                AvailableOnly = Filter.AvailableOnly
+                AvailableOnly = Filter.AvailableOnly,
+                GenreIds = Filter.GenreIds != null ? new List<int>(Filter.GenreIds) : null
             };
 
             _showFilterDialog = true;

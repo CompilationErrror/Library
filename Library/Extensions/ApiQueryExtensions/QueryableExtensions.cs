@@ -69,8 +69,7 @@ namespace LibraryApi.Extensions.ApiQueryExtensions
 
             if (parameters.GenreIds != null && parameters.GenreIds.Any())
             {
-                query = query.Where(book =>
-                    parameters.GenreIds.Contains(book.GenreId));
+                query = query.Where(book => book.GenreId.HasValue && parameters.GenreIds.Contains(book.GenreId.Value));
             }
 
             return query;

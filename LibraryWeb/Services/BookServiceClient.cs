@@ -44,7 +44,7 @@ namespace LibraryWeb.Services
 
             if (parameters.GenreIds is { Count: > 0 })
             {
-                foreach (var genreId in parameters.GenreIds.Where(x => x.HasValue))
+                foreach (var genreId in parameters.GenreIds)
                 {
                     queryParams.Add($"genreIds={genreId}");
                 }
@@ -55,6 +55,8 @@ namespace LibraryWeb.Services
             return GetAsync<PagedResult<Book>>($"api/Book?{queryString}");
         }
 
+        public Task<ApiResponse<List<Genre>>> GetGenresAsync()
+            => GetAsync<List<Genre>>($"api/Book/genres");
 
         public Task<ApiResponse<Book>> GetBookByIdAsync(int bookId)
             => GetAsync<Book>($"api/Book/{bookId}");

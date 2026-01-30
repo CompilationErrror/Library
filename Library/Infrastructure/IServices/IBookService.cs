@@ -7,6 +7,7 @@ namespace LibraryApi.Infrastructure.Interfaces
     {
         Task<List<Book>> GetBooksAsync(BookQueryParameters parameters);
         Task<Book> GetBookByIdAsync(int id);
+        Task<List<Genre>> GetGenresAsync();
         Task AddBookAsync(Book book);
         Task UpdateBookAsync(Book book);
         Task DeleteBookAsync(int id);
