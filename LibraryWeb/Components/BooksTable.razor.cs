@@ -23,8 +23,7 @@ namespace LibraryWeb.Components
         [Parameter] public BookFilter Filter { get; set; } = new();
         [Parameter] public List<Genre> AvailableGenres { get; set; } = new();
 
-        private int GenreId { get; set; }
-        private IEnumerable<int> selectedGenres { get; set; } = new List<int>();
+        private List<string> _selectedGenresNames = new();
 
         private MudTable<Book>? _table;
 
@@ -86,6 +85,12 @@ namespace LibraryWeb.Components
             await OnFilterChanged.InvokeAsync(_localFilter);
 
             await ReloadTableData();
+        }
+
+        private void OnGenresChanged(IEnumerable<string> genresNames)
+        {
+            _selectedGenresNames = genresNames.ToList();
+            _localFilter.GenreIds = AvailableGenres.Where(genre => genresNames.Contains(genre.Name)).Select(g => g.Id).ToList();
         }
 
         public async Task ReloadTableData()

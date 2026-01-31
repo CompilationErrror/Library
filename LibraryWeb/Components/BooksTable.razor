@@ -133,17 +133,17 @@
                           @bind-Value="_localFilter.Author"
                           Clearable />
 
-            <MudSelect T="int"
+            <MudSelect T="string"
                        Label="Genres"
                        MultiSelection="true"
-                       @bind-Value="GenreId" 
-                       @bind-SelectedValues="selectedGenres"
                        AnchorOrigin="Origin.BottomCenter"
-                       Dense="true"
-                       MaxHeight="300">
+                       SelectedValues="_selectedGenresNames"
+                       SelectedValuesChanged="OnGenresChanged">
                 @foreach (var genre in AvailableGenres)
                 {
-                    <MudSelectItem T="int" Value="@genre.Id">@genre.Name</MudSelectItem>
+                    <MudSelectItem T="string" Value="genre.Name">
+                        @genre.Name
+                    </MudSelectItem>
                 }
             </MudSelect>
 
